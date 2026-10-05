@@ -1,3 +1,21 @@
+# civetwebR 0.0.1.4
+
+- CI (.github/workflows/ci.yaml): R CMD check on Linux and macOS through
+  r-ci, failing on WARNINGs; Windows through r-lib/actions; and CRAN's
+  additional checks in the r-hub containers, R built with clang's and
+  gcc's AddressSanitizer and UndefinedBehaviorSanitizer and a valgrind
+  instrumented R, failing on any sanitizer or memcheck report.
+  `tools/sanitize.sh` is the local counterpart: the whole suite under
+  valgrind, then under ASan and UBSan, with no test allowed to skip.
+- man/ is committed, so a clone checks as the tarball does.
+- civetweb suppressed `-Wformat-nonliteral` with pragmas, which
+  `R CMD check --as-cran` reports as a WARNING; removed
+  (tools/patches/0004). The remaining pragmas in civetweb and Mbed TLS
+  suppress diagnostics R does not count as important and show as a NOTE.
+- The static_dirs test read a body without a trailing newline through
+  `readLines()`, which returns nothing for it on macOS; it reads by
+  Content-Length now.
+
 # civetwebR 0.0.1.3
 
 - TLS. `start_server()` and `serve()` take `tls_cert`, a PEM file holding
