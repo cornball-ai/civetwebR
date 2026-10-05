@@ -1,3 +1,19 @@
+# civetwebR 0.0.1.2
+
+- R CMD check is clean. civetweb's `sprintf()` calls go through
+  `mg_snprintf()` (tools/patches/0001), `mg_cry()` no longer writes to
+  stderr or log files (src/civetweb/external_mg_cry_internal_impl.inl;
+  messages reach the context's `log_message` callback or are dropped),
+  the `.inl` pieces live in src/civetweb/, the licence file is named as
+  DESCRIPTION points to it, and .github is build-ignored.
+- A request carrying both `Transfer-Encoding` and `Content-Length` is
+  refused with 400 before it reaches R (tools/patches/0002; RFC 7230
+  section 3.3.3). Upstream commit 588860e intends the same but does not
+  compile, so the pin stays at its parent 3309a6c.
+- `tools/vendor-civetweb.sh` re-fetches civetweb at the pinned commit,
+  normalizes line endings and applies the patches; the commit is
+  recorded in src/civetweb/COMMIT.
+
 # civetwebR 0.0.1.1
 
 - The C bridge keeps all state per server (`cw_server_t` behind an

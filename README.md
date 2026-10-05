@@ -150,6 +150,21 @@ repeat {
 - All handlers run in the R thread  
 - No concurrency in user code  
 
+## Vendored CivetWeb
+
+`src/civetweb.c` and `src/civetweb/*.inl` are CivetWeb at the commit in
+`src/civetweb/COMMIT`, with the patches in `tools/patches/` applied:
+
+- `0001-cran-snprintf.patch`: `sprintf()` calls go through
+  `mg_snprintf()`, which R CMD check requires.
+- `0002-reject-chunked-with-content-length.patch`: a request with both
+  `Transfer-Encoding` and `Content-Length` is refused with 400.
+
+`src/civetweb/external_mg_cry_internal_impl.inl` replaces CivetWeb's
+error logging, which would otherwise write to stderr or a log file.
+`tools/vendor-civetweb.sh [<sha>]` re-fetches CivetWeb and reapplies the
+patches.
+
 ## License
 
 MIT
