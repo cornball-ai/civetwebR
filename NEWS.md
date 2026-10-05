@@ -1,3 +1,19 @@
+# civetwebR 0.0.1.3
+
+- TLS. `start_server()` and `serve()` take `tls_cert`, a PEM file holding
+  the certificate (and chain) followed by the private key; the port then
+  speaks https and wss. Mbed TLS 3.6.7 is bundled in src/mbedtls/, fetched
+  and sha256-verified by `tools/vendor-mbedtls.sh`, and compiled into the
+  shared object, so nothing is needed from the system. `has_tls()` reports
+  whether TLS was compiled in; a server handle carries `tls` and prints
+  its scheme.
+- The TLS paths of civetweb wrote to stderr; they now go through `mg_cry()`
+  (tools/patches/0003). Mbed TLS's self tests are switched off in
+  src/civetweb/civetwebr_mbedtls_config.h, so the shared object references
+  neither printf() nor rand().
+- DESCRIPTION lists the copyright holders of the bundled code, with the
+  details in inst/COPYRIGHTS, and declares GNU make.
+
 # civetwebR 0.0.1.2
 
 - R CMD check is clean. civetweb's `sprintf()` calls go through
