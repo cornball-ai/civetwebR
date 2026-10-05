@@ -834,7 +834,7 @@ static const char *scalar_string(SEXP x, const char *what) {
 
 SEXP civetweb_start_server(SEXP portS, SEXP hostS, SEXP threadsS, SEXP max_bodyS,
                            SEXP timeoutS, SEXP ws_pathS, SEXP static_prefixesS,
-                           SEXP static_dirsS, SEXP keep_aliveS) {
+                           SEXP static_dirsS, SEXP keep_aliveS, SEXP tls_certS) {
   if (!Rf_isInteger(portS) || LENGTH(portS) < 1)       Rf_error("port must be an integer");
   if (!Rf_isInteger(threadsS) || LENGTH(threadsS) < 1) Rf_error("num_threads must be an integer");
   if (!Rf_isReal(max_bodyS) || LENGTH(max_bodyS) < 1)  Rf_error("max_body_size must be a number");
@@ -842,6 +842,9 @@ SEXP civetweb_start_server(SEXP portS, SEXP hostS, SEXP threadsS, SEXP max_bodyS
   if (!Rf_isLogical(keep_aliveS) || LENGTH(keep_aliveS) < 1) Rf_error("keep_alive must be logical(1)");
   const char *host = scalar_string(hostS, "host");
   const char *ws_path = scalar_string(ws_pathS, "ws_path");
+  /* NULL for plain HTTP; otherwise one PEM file with certificate and key,
+   * which makes the port a TLS port ("s" suffix in listening_ports). */
+  const char *tls_cert = Rf_isNull(tls_certS) ? NULL : scalar_string(tls_certS, "tls_cert");
   if (!Rf_isString(static_prefixesS) || !Rf_isString(static_dirsS) ||
       LENGTH(static_prefixesS) != LENGTH(static_dirsS))
     Rf_error("static prefixes and dirs must be character vectors of one length");
@@ -879,7 +882,7 @@ SEXP civetweb_start_server(SEXP portS, SEXP hostS, SEXP threadsS, SEXP max_bodyS
    * document_root has to exist for file serving to be enabled at all, so
    * the first directory doubles as it. */
   char addr[160];
-  snprintf(addr, sizeof(addr), "%s:%d", host, port);
+  snprintf(addr, sizeof(addr), "%s:%d%s", host, port, tls_cert ? "s" : "");
   char threads_buf[16], timeout_buf[16];
   snprintf(threads_buf, sizeof(threads_buf), "%d", threads);
   snprintf(timeout_buf, sizeof(timeout_buf), "%d", timeout);
@@ -915,6 +918,9 @@ SEXP civetweb_start_server(SEXP portS, SEXP hostS, SEXP threadsS, SEXP max_bodyS
     opts[k++] = "document_root";       opts[k++] = doc_root;
     opts[k++] = "url_rewrite_patterns"; opts[k++] = rewrites;
   }
+  if (tls_cert) {
+    opts[k++] = "ssl_certificate";     opts[k++] = tls_cert;
+  }
   opts[k] = NULL;
 
   s->running = 1;
@@ -931,6 +937,11 @@ SEXP civetweb_start_server(SEXP portS, SEXP hostS, SEXP threadsS, SEXP max_bodyS
   R_RegisterCFinalizerEx(xptr, server_finalizer, TRUE);
   UNPROTECT(1);
   return xptr;
+}
+
+/* Whether TLS was compiled in (civetweb's feature bit, no server needed). */
+SEXP civetweb_has_tls(void) {
+  return Rf_ScalarLogical(mg_check_feature(MG_FEATURES_TLS) != 0);
 }
 
 SEXP civetweb_stop_server(SEXP xptr) {

@@ -1,0 +1,38 @@
+--- a/src/civetweb.c
++++ b/src/civetweb.c
+@@ -6187,7 +6187,7 @@
+ 				    || n == MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS) {
+ 					n = 0;
+ 				} else {
+-					fprintf(stderr, "SSL write failed, error %d\n", n);
++					mg_cry_ctx_internal(ctx, "SSL write failed, error %d", n);
+ 					return -2;
+ 				}
+ 			} else {
+@@ -6448,7 +6448,7 @@
+ 				    || nread == MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS) {
+ 					nread = 0;
+ 				} else {
+-					fprintf(stderr, "SSL read failed, error %d\n", nread);
++					mg_cry_internal(conn, "SSL read failed, error %d", nread);
+ 					return -2;
+ 				}
+ 			} else {
+@@ -16830,7 +16830,7 @@
+ 
+ 	dom_ctx->ssl_ctx = (SSL_CTX *)mg_calloc(1, sizeof(*dom_ctx->ssl_ctx));
+ 	if (dom_ctx->ssl_ctx == NULL) {
+-		fprintf(stderr, "ssl_ctx malloc failed\n");
++		mg_cry_ctx_internal(phys_ctx, "%s", "ssl_ctx malloc failed");
+ 		return 0;
+ 	}
+ 
+@@ -16862,7 +16862,7 @@
+ 
+ 	dom_ctx->ssl_ctx = (SSL_CTX *)mg_calloc(1, sizeof(*dom_ctx->ssl_ctx));
+ 	if (dom_ctx->ssl_ctx == NULL) {
+-		fprintf(stderr, "ssl_ctx malloc failed\n");
++		mg_cry_ctx_internal(phys_ctx, "%s", "ssl_ctx malloc failed");
+ 		return 0;
+ 	}
+ 

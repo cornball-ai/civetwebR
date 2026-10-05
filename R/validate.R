@@ -35,6 +35,20 @@
   ws_path
 }
 
+# NULL, or the path of a PEM file holding certificate and private key.
+.validate_tls_cert <- function(tls_cert) {
+  if (is.null(tls_cert)) {
+    return(NULL)
+  }
+  if (!is.character(tls_cert) || length(tls_cert) != 1L || is.na(tls_cert)) {
+    stop("tls_cert must be NULL or the path of a PEM file", call. = FALSE)
+  }
+  if (!file.exists(tls_cert)) {
+    stop("tls_cert file does not exist: ", tls_cert, call. = FALSE)
+  }
+  normalizePath(tls_cert, winslash = "/", mustWork = TRUE)
+}
+
 .validate_keep_alive <- function(keep_alive) {
   if (!is.logical(keep_alive) || length(keep_alive) != 1L || is.na(keep_alive)) {
     stop("keep_alive must be logical(1)", call. = FALSE)

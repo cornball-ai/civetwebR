@@ -1,0 +1,16 @@
+civetwebR itself is MIT, see the LICENSE file. It bundles two libraries:
+
+CivetWeb (src/civetweb.c, src/civetweb.h, src/civetweb/*.inl except the
+external_*.inl hooks written for this package)
+  Copyright (c) 2013-2025 the Civetweb developers
+  Copyright (c) 2004-2013 Sergey Lyubka
+  MIT license. https://github.com/civetweb/civetweb
+  The commit vendored is recorded in src/civetweb/COMMIT, and this
+  package's patches to it are in tools/patches/.
+
+Mbed TLS (src/mbedtls/)
+  Copyright The Mbed TLS Contributors
+  Dual Apache-2.0 OR GPL-2.0-or-later; this package takes it under
+  Apache-2.0. The full text is in src/mbedtls/LICENSE.
+  https://github.com/Mbed-TLS/mbedtls
+  The release vendored is recorded in src/mbedtls/VERSION.
