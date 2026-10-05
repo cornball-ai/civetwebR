@@ -8,6 +8,7 @@
 ^init\.R$
 ^\.github$
 ^\.Rprofile$
+^run\.sh$
 ^src/.*\.o$
 ^src/.*\.so$
 ^src/.*\.dll$

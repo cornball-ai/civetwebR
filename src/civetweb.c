@@ -638,8 +638,18 @@ typedef const char *SOCK_OPT_TYPE;
 #define W_OK (2) /* http://msdn.microsoft.com/en-us/library/1w06ktdy.aspx */
 #endif
 #define _POSIX_
+#if defined(__MINGW32__)
+/* civetwebR: R's Rtools toolchain uses MinGW's C99 stdio and gcc checks
+ * formats as gnu_printf, where "%I64d" parses as the 'I' flag, width 64
+ * and a plain %d: a format error to gcc, and a WARNING to R CMD check.
+ * The C99 macros are the right spelling for that toolchain. */
+#include <inttypes.h>
+#define INT64_FMT PRId64
+#define UINT64_FMT PRIu64
+#else
 #define INT64_FMT "I64d"
 #define UINT64_FMT "I64u"
+#endif
 
 #define WINCDECL __cdecl
 #define vsnprintf_impl _vsnprintf
@@ -3181,7 +3191,7 @@ mg_vsnprintf(const struct mg_connection *conn,
 
 #if defined(__clang__)
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-nonliteral"
+/* civetwebR: -Wformat-nonliteral is not suppressed; R CMD check flags that */
 	/* Using fmt as a non-literal is intended here, since it is mostly called
 	 * indirectly by mg_snprintf */
 #endif
@@ -3469,7 +3479,7 @@ mg_cry_internal_impl(const struct mg_connection *conn,
 
 #if defined(GCC_DIAGNOSTIC)
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+/* civetwebR: -Wformat-nonliteral is not suppressed; R CMD check flags that */
 #endif
 
 	IGNORE_UNUSED_RESULT(vsnprintf_impl(buf, sizeof(buf), fmt, ap));
@@ -7143,7 +7153,7 @@ mg_send_chunk(struct mg_connection *conn,
 /* This block forwards format strings to printf implementations,
  * so we need to disable the format-nonliteral warning. */
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+/* civetwebR: -Wformat-nonliteral is not suppressed; R CMD check flags that */
 #endif
 
 
@@ -10467,9 +10477,22 @@ send_file_data(struct mg_connection *conn,
 			offset = (int64_t)sf_offs;
 		}
 #endif
+		/* civetwebR: the loop below reads the descriptor (pull_inner()
+		 * uses read(fileno(fp))), so the seek must move the descriptor
+		 * too. fseeko() seeks the stream, and BSD stdio on macOS fills
+		 * the stream buffer from the descriptor to do so, leaving the
+		 * descriptor past the data: a ranged request for a small file
+		 * answered 206 with an empty body. Windows already maps fseeko()
+		 * to _lseeki64() on the descriptor. */
+#if defined(_WIN32)
 		if ((offset > 0) && (fseeko(filep->access.fp, offset, SEEK_SET) != 0)) {
+#else
+		if ((offset > 0)
+		    && (lseek(fileno(filep->access.fp), (off_t)offset, SEEK_SET)
+		        == (off_t)-1)) {
+#endif
 			mg_cry_internal(conn,
-			                "%s: fseeko() failed: %s",
+			                "%s: seek failed: %s",
 			                __func__,
 			                strerror(ERRNO));
 			mg_send_http_error(
@@ -19593,7 +19616,7 @@ mg_connect_websocket_client_impl(const struct mg_client_options *client_options,
 
 #if defined(__clang__)
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-nonliteral"
+/* civetwebR: -Wformat-nonliteral is not suppressed; R CMD check flags that */
 #endif
 
 	/* Establish the client connection and request upgrade */

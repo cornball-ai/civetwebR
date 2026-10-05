@@ -239,24 +239,10 @@ test_that("static_dirs are served by civetweb with byte ranges, never reaching R
   on.exit(stop_server(srv), add = TRUE)
   port <- server_port(srv)
 
-  p <- callr::r_bg(
-    function(port) {
-      con <- socketConnection("127.0.0.1", port, open = "r+b", blocking = TRUE)
-      on.exit(close(con))
-      writeLines(c("GET /assets/digits.txt HTTP/1.1", "Host: x",
-                   "Range: bytes=2-4", ""), con, sep = "\r\n")
-      flush(con)
-      status <- readLines(con, n = 1L, warn = FALSE)
-      body <- character(0)
-      repeat {
-        line <- readLines(con, n = 1L, warn = FALSE)
-        if (length(line) == 0L) break
-        body <- c(body, line)
-      }
-      list(status = status, tail = body[length(body)])
-    },
-    args = list(port)
-  )
+  # -i: status line and headers first, then the 3-byte body as the
+  # last line. (R's socket reads returned early on macOS; see curl_bg.)
+  p <- curl_bg(c("-s", "-i", "--max-time", "10", "-r", "2-4",
+                 sprintf("http://127.0.0.1:%d/assets/digits.txt", port)))
   on.exit(if (p$is_alive()) p$kill(), add = TRUE)
 
   # Drive the loop: no "request" event may arrive for the static path.
@@ -270,8 +256,9 @@ test_that("static_dirs are served by civetweb with byte ranges, never reaching R
 
   p$wait(5000)
   res <- p$get_result()
-  expect_match(res$status, "206")
-  expect_equal(res$tail, "234")
+  expect_null(res$status)
+  expect_match(res$lines[1], "206")
+  expect_equal(res$lines[length(res$lines)], "234")
 })
 
 test_that("a request with both Transfer-Encoding and Content-Length is refused with 400 before reaching R", {

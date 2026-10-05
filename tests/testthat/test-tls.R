@@ -25,18 +25,7 @@ tls_fixture <- function() {
   pem
 }
 
-# curl in a background R process; the result has the exit status (NULL for
-# 0) and the combined output.
-curl_bg <- function(args) {
-  if (!nzchar(Sys.which("curl"))) skip("curl command-line tool not available")
-  callr::r_bg(
-    function(args) {
-      out <- suppressWarnings(system2("curl", args, stdout = TRUE, stderr = TRUE))
-      list(status = attr(out, "status"), out = paste(out, collapse = "\n"))
-    },
-    args = list(args)
-  )
-}
+# curl_bg() lives in helper-drive.R.
 
 test_that("has_tls() is TRUE with the bundled Mbed TLS", {
   expect_true(has_tls())

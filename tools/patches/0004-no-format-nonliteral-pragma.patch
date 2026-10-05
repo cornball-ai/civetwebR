@@ -1,0 +1,38 @@
+--- a/src/civetweb.c
++++ b/src/civetweb.c
+@@ -3181,7 +3181,7 @@
+ 
+ #if defined(__clang__)
+ #pragma clang diagnostic push
+-#pragma clang diagnostic ignored "-Wformat-nonliteral"
++/* civetwebR: -Wformat-nonliteral is not suppressed; R CMD check flags that */
+ 	/* Using fmt as a non-literal is intended here, since it is mostly called
+ 	 * indirectly by mg_snprintf */
+ #endif
+@@ -3469,7 +3469,7 @@
+ 
+ #if defined(GCC_DIAGNOSTIC)
+ #pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
++/* civetwebR: -Wformat-nonliteral is not suppressed; R CMD check flags that */
+ #endif
+ 
+ 	IGNORE_UNUSED_RESULT(vsnprintf_impl(buf, sizeof(buf), fmt, ap));
+@@ -7143,7 +7143,7 @@
+ /* This block forwards format strings to printf implementations,
+  * so we need to disable the format-nonliteral warning. */
+ #pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
++/* civetwebR: -Wformat-nonliteral is not suppressed; R CMD check flags that */
+ #endif
+ 
+ 
+@@ -19593,7 +19593,7 @@
+ 
+ #if defined(__clang__)
+ #pragma clang diagnostic push
+-#pragma clang diagnostic ignored "-Wformat-nonliteral"
++/* civetwebR: -Wformat-nonliteral is not suppressed; R CMD check flags that */
+ #endif
+ 
+ 	/* Establish the client connection and request upgrade */
