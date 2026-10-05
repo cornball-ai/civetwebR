@@ -3,8 +3,9 @@
 # Internal environment storing server state (not exported)
 .state <- new.env(parent = emptyenv())
 
-# Native server pointer (externalptr)
+# Native server pointer (externalptr) of the default server, and its handle
 .state$server_xptr <- NULL
+.state$server <- NULL
 
 # Driver loop state (NEW)
 .state$loop_running <- FALSE

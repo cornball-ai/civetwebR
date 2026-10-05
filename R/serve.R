@@ -9,6 +9,10 @@
 #' @param num_threads Integer. Number of worker threads. Default is 50.
 #' @param max_body_size Number. Maximum request body size in bytes. Default is 8MiB.
 #' @param request_timeout_ms Integer. Socket receive timeout. Default is 30s.
+#' @param ws_path String. The path WebSocket upgrades are accepted on.
+#'   Default `"/ws"`.
+#' @param keep_alive Logical. Keep HTTP connections open between requests.
+#'   Default `FALSE`.
 #'
 #' @rdname serve
 #' @export
@@ -21,7 +25,9 @@ serve <- function(
   timeout_ms = 100L,
   num_threads = 50L,
   max_body_size = 8 * 1024 * 1024,
-  request_timeout_ms = 30000L
+  request_timeout_ms = 30000L,
+  ws_path = "/ws",
+  keep_alive = FALSE
 ) {
   args <- .validate_serve_input(
     port,
@@ -95,10 +101,11 @@ serve <- function(
     stop("Server loop is already running", call. = FALSE)
   }
 
-  start_server(port, host, num_threads, max_body_size, request_timeout_ms)
+  start_server(port, host, num_threads, max_body_size, request_timeout_ms,
+               ws_path = ws_path, keep_alive = keep_alive)
 
   if (!quiet) {
-    cat(sprintf("Server running on http://%s:%d\n", host, port))
+    cat(sprintf("Server running on http://%s:%d\n", host, server_port()))
   }
 
   .set_loop_running(TRUE)

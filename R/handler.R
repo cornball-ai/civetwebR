@@ -207,17 +207,25 @@ clear_handlers <- function() {
   if (length(nms)) {
     rm(list = nms, envir = env)
   }
-  .state$ws_handlers <- list(open = NULL, message = NULL, close = NULL)
+  .state$ws_handlers <- list(
+    connect = NULL, open = NULL, message = NULL, close = NULL
+  )
   invisible(TRUE)
 }
 
 #' Register WebSocket event handlers
 #'
-#' @param event Character string: "open", "message", or "close".
+#' A `"connect"` handler runs before the handshake and decides whether the
+#' client may upgrade: it returns `TRUE` to accept, `FALSE` to refuse with
+#' 403, or a list with a `status` to refuse with that status. It sees the
+#' upgrade request's `headers` (so `Origin` or a cookie can be checked)
+#' and `remote_addr`. Without a connect handler every upgrade is accepted.
+#'
+#' @param event Character string: "connect", "open", "message", or "close".
 #' @param fun Function taking a `cw_request` object.
 #' @export
 on_ws <- function(event, fun) {
-  event <- match.arg(event, c("open", "message", "close"))
+  event <- match.arg(event, c("connect", "open", "message", "close"))
   if (!is.function(fun) && !is.null(fun)) {
     stop("fun must be a function")
   }
@@ -225,7 +233,21 @@ on_ws <- function(event, fun) {
 }
 
 .dispatch_ws_event <- function(req) {
-  # type mapping from server.c: 2=READY (open), 3=DATA (message), 4=CLOSE
+  # type mapping from server.c:
+  # 1=CONNECT (before handshake), 2=READY (open), 3=DATA (message), 4=CLOSE
+  if (identical(req$type, 1L)) {
+    fun <- .state$ws_handlers[["connect"]]
+    decision <- TRUE
+    if (is.function(fun)) {
+      decision <- tryCatch(fun(req), error = function(e) FALSE)
+      if (!is.list(decision) && !isTRUE(decision)) {
+        decision <- FALSE
+      }
+    }
+    .send_response(req$id, decision)
+    return(invisible(NULL))
+  }
+
   handler_name <- switch(
     as.character(req$type),
     "2" = "open",
@@ -240,4 +262,5 @@ on_ws <- function(event, fun) {
       try(fun(req), silent = FALSE)
     }
   }
+  invisible(NULL)
 }
