@@ -186,6 +186,10 @@ openssl req -x509 -newkey rsa:2048 -nodes -days 365 -subj /CN=localhost \
   important diagnostic.
 - `0005-mingw-int64-format.patch`: 64-bit formats are `PRId64` under
   MinGW, where Rtools' gcc reads `%I64d` as a plain `%d`.
+- `0006-send-file-seek-descriptor.patch`: a ranged static file is
+  positioned with `lseek()` on the descriptor it is then read from.
+  `fseeko()` on the stream left the descriptor past the data on macOS,
+  so a byte range of a small file came back empty.
 
 `src/civetweb/external_mg_cry_internal_impl.inl` replaces CivetWeb's
 error logging, which would otherwise write to stderr or a log file.

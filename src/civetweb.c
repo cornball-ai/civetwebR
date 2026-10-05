@@ -10477,9 +10477,22 @@ send_file_data(struct mg_connection *conn,
 			offset = (int64_t)sf_offs;
 		}
 #endif
+		/* civetwebR: the loop below reads the descriptor (pull_inner()
+		 * uses read(fileno(fp))), so the seek must move the descriptor
+		 * too. fseeko() seeks the stream, and BSD stdio on macOS fills
+		 * the stream buffer from the descriptor to do so, leaving the
+		 * descriptor past the data: a ranged request for a small file
+		 * answered 206 with an empty body. Windows already maps fseeko()
+		 * to _lseeki64() on the descriptor. */
+#if defined(_WIN32)
 		if ((offset > 0) && (fseeko(filep->access.fp, offset, SEEK_SET) != 0)) {
+#else
+		if ((offset > 0)
+		    && (lseek(fileno(filep->access.fp), (off_t)offset, SEEK_SET)
+		        == (off_t)-1)) {
+#endif
 			mg_cry_internal(conn,
-			                "%s: fseeko() failed: %s",
+			                "%s: seek failed: %s",
 			                __func__,
 			                strerror(ERRNO));
 			mg_send_http_error(

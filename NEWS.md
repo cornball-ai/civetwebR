@@ -20,6 +20,11 @@
   reports as a significant warning; MinGW builds use `PRId64` now
   (tools/patches/0005).
 - `run.sh`, which r-ci drops into the checkout, is build-ignored.
+- On macOS, a byte-range request for a static file served by civetweb
+  (`static_dirs`) answered 206 with an empty body: civetweb seeks the
+  stdio stream but reads the descriptor, and BSD stdio fills its buffer
+  from the descriptor on that seek. The seek moves the descriptor now
+  (tools/patches/0006), as civetweb's own Windows mapping already did.
 
 # civetwebR 0.0.1.3
 
