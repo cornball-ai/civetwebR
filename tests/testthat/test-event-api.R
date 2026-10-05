@@ -183,7 +183,9 @@ test_that("a WebSocket connect is refused before the handshake when R says no", 
   expect_equal(ev$remote_addr, "127.0.0.1")
 
   p$wait(5000)
-  expect_match(p$get_result()$status, "403")
+  # the whole response head, not just an error body: a client waiting
+  # for the status line must see it
+  expect_match(p$get_result()$status, "^HTTP/1\\.1 403")
 })
 
 test_that("an accepted WebSocket keeps one id from connect to close, and ws_send/ws_close work", {
@@ -224,6 +226,96 @@ test_that("an accepted WebSocket keeps one id from connect to close, and ws_send
   expect_match(res$status, "101")
   expect_equal(res$echo, "echo:hi")
   expect_true(res$closed_by_server)
+})
+
+# A client that exercises the RFC 6455 details a browser relies on: a
+# text message split over two frames, a ping, and a close it initiates.
+ws_client_rfc <- function(port) {
+  callr::r_bg(
+    function(port, ws_handshake) {
+      con <- socketConnection("127.0.0.1", port, open = "r+b", blocking = TRUE)
+      on.exit(close(con))
+      key <- as.raw(c(1, 2, 3, 4))
+      frame <- function(opcode, payload, fin = TRUE) {
+        mask <- rep_len(as.integer(key), length(payload))
+        masked <- as.raw(bitwXor(as.integer(payload), mask))
+        c(as.raw(c((if (fin) 0x80 else 0x00) + opcode, 0x80 + length(payload))),
+          key, masked)
+      }
+      read_frame <- function() {
+        hdr <- readBin(con, "raw", 2L)
+        n <- as.integer(hdr[2]) %% 128L
+        list(opcode = as.integer(hdr[1]) %% 16L,
+             payload = if (n > 0L) readBin(con, "raw", n) else raw(0))
+      }
+      out <- list(status = ws_handshake(con))
+      # "ab" as a non-final text frame, "cd" as the final continuation
+      writeBin(c(frame(0x1, charToRaw("ab"), fin = FALSE),
+                 frame(0x0, charToRaw("cd"))), con)
+      flush(con)
+      out$echo <- rawToChar(read_frame()$payload)
+      writeBin(frame(0x9, charToRaw("marco")), con)
+      flush(con)
+      f <- read_frame()
+      out$pong <- list(opcode = f$opcode, payload = rawToChar(f$payload))
+      writeBin(frame(0x8, as.raw(c(0x03, 0xE8))), con)
+      flush(con)
+      f <- read_frame()
+      out$close <- list(opcode = f$opcode, payload = as.integer(f$payload))
+      repeat {
+        chunk <- readBin(con, "raw", 1L)
+        if (length(chunk) == 0L) break
+      }
+      out$eof <- TRUE
+      out
+    },
+    args = list(port, ws_handshake)
+  )
+}
+
+test_that("fragmented text arrives with opcodes, pings are answered, a client close is echoed", {
+  skip_on_cran()
+  skip_if_not_installed("callr")
+
+  srv <- start_server(port = 0L, register = FALSE)
+  on.exit(stop_server(srv), add = TRUE)
+  port <- server_port(srv)
+
+  p <- ws_client_rfc(port)
+  on.exit(if (p$is_alive()) p$kill(), add = TRUE)
+
+  parts <- raw(0)
+  seen <- drive_until(
+    srv,
+    function(ev) {
+      if (ev$event == "ws_message") {
+        expect_false(ev$binary)
+        parts <<- c(parts, ev$body)
+        if (ev$fin) {
+          ws_send(ev$id, rawToChar(parts), srv)
+          parts <<- raw(0)
+        }
+      }
+      ev$event == "ws_close"
+    },
+    function(ev) TRUE,
+    timeout = 10
+  )
+  msgs <- Filter(function(e) e$event == "ws_message", seen)
+  expect_equal(vapply(msgs, function(e) e$opcode, 1L), c(1L, 0L))
+  expect_equal(vapply(msgs, function(e) e$fin, NA), c(FALSE, TRUE))
+
+  p$wait(10000)
+  res <- p$get_result()
+  expect_match(res$status, "101")
+  expect_equal(res$echo, "abcd")
+  # the pong came from civetweb; no ws_message event carried the ping
+  expect_equal(res$pong$opcode, 10L)
+  expect_equal(res$pong$payload, "marco")
+  # the close echo carries the client's status code (1000)
+  expect_equal(res$close$opcode, 8L)
+  expect_equal(res$close$payload, c(3L, 232L))
+  expect_true(res$eof)
 })
 
 test_that("static_dirs are served by civetweb with byte ranges, never reaching R", {

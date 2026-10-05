@@ -106,6 +106,7 @@ typedef struct cw_request {
   int req_body_too_large;
   int ws_fin;                /* WS_DATA: final frame of a message */
   int ws_binary;             /* WS_DATA: binary (1) or text (0) frame */
+  int ws_opcode;             /* WS_DATA: 1 text, 2 binary, 0 continuation */
   int alloc_failed;          /* a copy failed on the worker thread */
 
   struct mg_connection *conn;
@@ -626,7 +627,17 @@ static int ws_connect_handler(const struct mg_connection *conn, void *cbdata) {
   wait_for_R(r);
 
   if (!r->accept) {
-    mg_send_http_error((struct mg_connection *)conn, r->status, "%s", "");
+    /* Not mg_send_http_error(): civetweb has already classed this
+     * connection as a WebSocket (protocol_type), and its response
+     * header functions refuse to write on one, so only the error body
+     * would go out and a client waiting for the status line would wait
+     * forever. Write the whole refusal, as the 503 path does. */
+    struct mg_connection *wc = (struct mg_connection *)conn;
+    const char *text = mg_get_response_code_text(wc, r->status);
+    mg_printf(wc,
+              "HTTP/1.1 %d %s\r\nContent-Type: text/plain\r\n"
+              "Content-Length: %d\r\nConnection: close\r\n\r\n%s",
+              r->status, text, (int)strlen(text), text);
     cw_mutex_lock(&s->lock);
     remove_active(s, r);
     s->in_flight--;
@@ -671,8 +682,20 @@ static int ws_data_handler(struct mg_connection *conn, int bits, char *data,
 
   if (anchor->close_requested) return 0;
 
+  /* The client is closing. civetweb ends the read loop on this opcode
+   * and runs the close callback, but sends nothing back; RFC 6455
+   * section 5.5.1 has the server echo a close frame with the status
+   * code it received. (A close that answers one of ours is handled
+   * above: close_requested is set and nothing more is sent.) */
+  if (opcode == MG_WEBSOCKET_OPCODE_CONNECTION_CLOSE) {
+    mg_websocket_write(conn, MG_WEBSOCKET_OPCODE_CONNECTION_CLOSE, data,
+                       len >= 2 ? 2 : 0);
+    return 1;
+  }
+
   /* Text, binary and continuation frames go to R; civetweb answers
-   * ping, pong and close itself. */
+   * ping and pong itself (enable_websocket_ping_pong). Anything else
+   * (reserved opcodes) is ignored. */
   if (opcode != MG_WEBSOCKET_OPCODE_TEXT && opcode != MG_WEBSOCKET_OPCODE_BINARY &&
       opcode != MG_WEBSOCKET_OPCODE_CONTINUATION) {
     return 1;
@@ -683,6 +706,7 @@ static int ws_data_handler(struct mg_connection *conn, int bits, char *data,
   r->id = anchor->id;
   r->ws_fin = (bits & 0x80) ? 1 : 0;
   r->ws_binary = (opcode == MG_WEBSOCKET_OPCODE_BINARY) ? 1 : 0;
+  r->ws_opcode = opcode;
   if (len > 0) {
     r->req_body = (unsigned char *)malloc(len);
     if (!r->req_body) { free_req(r); return 1; }
@@ -914,6 +938,9 @@ SEXP civetweb_start_server(SEXP portS, SEXP hostS, SEXP threadsS, SEXP max_bodyS
   opts[k++] = "linger_timeout_ms";     opts[k++] = "0";
   opts[k++] = "enable_keep_alive";     opts[k++] = keep_alive ? "yes" : "no";
   opts[k++] = "enable_directory_listing"; opts[k++] = "no";
+  /* civetweb answers WebSocket pings with pongs itself; R never sees
+   * either, which is the behaviour a client expects from a server. */
+  opts[k++] = "enable_websocket_ping_pong"; opts[k++] = "yes";
   if (doc_root) {
     opts[k++] = "document_root";       opts[k++] = doc_root;
     opts[k++] = "url_rewrite_patterns"; opts[k++] = rewrites;
@@ -985,8 +1012,8 @@ SEXP civetweb_next_request_timeout(SEXP xptr, SEXP timeout_ms) {
 
   const char *names[] = { "id", "method", "path", "query", "headers", "body",
                           "body_too_large", "type", "remote_addr", "remote_port",
-                          "fin", "binary" };
-  const int nf = 12;
+                          "fin", "binary", "opcode" };
+  const int nf = 13;
   SEXP out = PROTECT(Rf_allocVector(VECSXP, nf));
   SEXP nms = PROTECT(Rf_allocVector(STRSXP, nf));
   for (int i = 0; i < nf; i++) SET_STRING_ELT(nms, i, Rf_mkChar(names[i]));
@@ -1016,6 +1043,7 @@ SEXP civetweb_next_request_timeout(SEXP xptr, SEXP timeout_ms) {
   SET_VECTOR_ELT(out, 9, Rf_ScalarInteger(r->remote_port));
   SET_VECTOR_ELT(out, 10, Rf_ScalarLogical(r->ws_fin));
   SET_VECTOR_ELT(out, 11, Rf_ScalarLogical(r->ws_binary));
+  SET_VECTOR_ELT(out, 12, Rf_ScalarInteger(r->ws_opcode));
   UNPROTECT(5);
 
   /* Transient events are done once copied. A close event also retires

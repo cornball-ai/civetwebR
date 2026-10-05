@@ -35,14 +35,20 @@ that status. Nothing is sent to the client until R decides, so this
 is where an \code{Origin} or cookie check belongs.
 \item \code{"ws_open"}: the handshake completed for the connection with this
 \code{id}.
-\item \code{"ws_message"}: a frame arrived. \code{body} (raw), \code{binary}, \code{fin} (the
-last frame of a message; a message split across frames arrives as
-several events, the last with \code{fin = TRUE}).
+\item \code{"ws_message"}: a data frame arrived. \code{body} (raw), \code{binary}, \code{fin}
+and \code{opcode} (1 text, 2 binary, 0 continuation). A message split
+across frames arrives as several events: the first with the text or
+binary opcode, the rest as continuations, the last with \code{fin = TRUE};
+the receiver concatenates the bodies.
 \item \code{"ws_close"}: the connection with this \code{id} is gone.
 }
 
 A WebSocket connection keeps the \code{id} of its connect event for its
 whole life; \code{ws_send()} and \code{ws_close()} address it by that id.
+
+Control frames never reach R: CivetWeb answers a ping with a pong, and
+a close frame from the client is echoed back with its status code
+before the \code{ws_close} event (RFC 6455 section 5.5.1).
 
 On Ctrl-C an \code{interrupt} condition is signalled.
 }
