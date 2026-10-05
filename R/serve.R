@@ -13,6 +13,8 @@
 #'   Default `"/ws"`.
 #' @param keep_alive Logical. Keep HTTP connections open between requests.
 #'   Default `FALSE`.
+#' @param tls_cert NULL, or the path of a PEM file holding the server's
+#'   certificate and private key; see [start_server()].
 #'
 #' @rdname serve
 #' @export
@@ -27,7 +29,8 @@ serve <- function(
   max_body_size = 8 * 1024 * 1024,
   request_timeout_ms = 30000L,
   ws_path = "/ws",
-  keep_alive = FALSE
+  keep_alive = FALSE,
+  tls_cert = NULL
 ) {
   args <- .validate_serve_input(
     port,
@@ -102,10 +105,11 @@ serve <- function(
   }
 
   start_server(port, host, num_threads, max_body_size, request_timeout_ms,
-               ws_path = ws_path, keep_alive = keep_alive)
+               ws_path = ws_path, keep_alive = keep_alive, tls_cert = tls_cert)
 
   if (!quiet) {
-    cat(sprintf("Server running on http://%s:%d\n", host, server_port()))
+    scheme <- if (is.null(tls_cert)) "http" else "https"
+    cat(sprintf("Server running on %s://%s:%d\n", scheme, host, server_port()))
   }
 
   .set_loop_running(TRUE)

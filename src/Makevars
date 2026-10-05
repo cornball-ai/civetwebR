@@ -2,5 +2,15 @@
 #   -Icivetweb: the .inl pieces civetweb.c #includes live in src/civetweb/
 #   MG_EXTERNAL_FUNCTION_mg_cry_internal_impl: our mg_cry (no stderr, no
 #   log files), see src/civetweb/external_mg_cry_internal_impl.inl
-PKG_CPPFLAGS = -DNO_SSL -DNO_CGI -DUSE_WEBSOCKET -DUSE_IPV6 \
-  -DMG_EXTERNAL_FUNCTION_mg_cry_internal_impl -Icivetweb
+#   USE_MBEDTLS: TLS through the Mbed TLS sources bundled in src/mbedtls/
+#   MBEDTLS_USER_CONFIG_FILE: our adjustments to Mbed TLS's default
+#   configuration, see src/civetweb/civetwebr_mbedtls_config.h
+PKG_CPPFLAGS = -DNO_CGI -DUSE_WEBSOCKET -DUSE_IPV6 -DUSE_MBEDTLS \
+  -DMG_EXTERNAL_FUNCTION_mg_cry_internal_impl \
+  -DMBEDTLS_USER_CONFIG_FILE=\"civetwebr_mbedtls_config.h\" \
+  -Icivetweb -Imbedtls/include
+
+# Every Mbed TLS source is compiled into the shared object. $(wildcard)
+# needs GNU make, declared in DESCRIPTION's SystemRequirements.
+MBEDTLS_OBJECTS = $(patsubst %.c,%.o,$(wildcard mbedtls/library/*.c))
+OBJECTS = civetweb.o server.o init.o $(MBEDTLS_OBJECTS)

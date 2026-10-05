@@ -19,6 +19,10 @@
 #'   reach R. Distinct from the R-side `static` argument of `serve()`.
 #' @param keep_alive Logical. Keep HTTP connections open between requests.
 #'   Default `FALSE`.
+#' @param tls_cert NULL, or the path of a PEM file holding the server's
+#'   certificate (followed by its chain, if any) and its private key. When
+#'   given, the port speaks TLS (https and wss) through the bundled Mbed
+#'   TLS, and a plain-HTTP client on it is refused.
 #' @param register Logical. Make this the default server. Default `TRUE`.
 #' @return A server handle (class `cw_server`), invisibly.
 #' @export
@@ -31,6 +35,7 @@ start_server <- function(
   ws_path = "/ws",
   static_dirs = NULL,
   keep_alive = FALSE,
+  tls_cert = NULL,
   register = TRUE
 ) {
   if (isTRUE(register)) {
@@ -44,6 +49,7 @@ start_server <- function(
   ws_path <- .validate_ws_path(ws_path)
   static_dirs <- .validate_static_dirs(static_dirs)
   keep_alive <- .validate_keep_alive(keep_alive)
+  tls_cert <- .validate_tls_cert(tls_cert)
 
   ptr <- .Call(
     civetweb_start_server,
@@ -56,6 +62,7 @@ start_server <- function(
     names(static_dirs),
     unname(static_dirs),
     keep_alive,
+    tls_cert,
     PACKAGE = "civetwebR"
   )
 
@@ -64,7 +71,8 @@ start_server <- function(
   }
 
   handle <- structure(
-    list(ptr = ptr, host = host, port = port, ws_path = ws_path),
+    list(ptr = ptr, host = host, port = port, ws_path = ws_path,
+         tls = !is.null(tls_cert)),
     class = "cw_server"
   )
 
@@ -119,10 +127,22 @@ server_port <- function(server = NULL) {
   .Call(civetweb_server_port, .server_ptr(server), PACKAGE = "civetwebR")
 }
 
+#' Was TLS compiled in?
+#'
+#' TRUE when the package was built with TLS support, which the bundled Mbed
+#' TLS sources provide on every platform.
+#'
+#' @return Logical.
+#' @export
+has_tls <- function() {
+  .Call(civetweb_has_tls, PACKAGE = "civetwebR")
+}
+
 #' @export
 print.cw_server <- function(x, ...) {
   running <- .Call(civetweb_server_running, x$ptr, PACKAGE = "civetwebR")
-  cat("<cw_server> http://", x$host, ":", x$port, "  ",
+  scheme <- if (isTRUE(x$tls)) "https" else "http"
+  cat("<cw_server> ", scheme, "://", x$host, ":", x$port, "  ",
       if (running) "running" else "stopped", "\n", sep = "")
   invisible(x)
 }

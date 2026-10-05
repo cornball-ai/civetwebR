@@ -150,7 +150,27 @@ repeat {
 - All handlers run in the R thread  
 - No concurrency in user code  
 
-## Vendored CivetWeb
+## TLS
+
+Pass `tls_cert`, a PEM file holding the certificate (and its chain)
+followed by the private key, and the port speaks https and wss through
+the bundled Mbed TLS:
+
+```r
+serve(port = 8443, host = "0.0.0.0", tls_cert = "server.pem")
+srv <- start_server(port = 8443, tls_cert = "server.pem")
+```
+
+A self-signed certificate for local use:
+
+```sh
+openssl req -x509 -newkey rsa:2048 -nodes -days 365 -subj /CN=localhost \
+  -keyout key.pem -out crt.pem && cat crt.pem key.pem > server.pem
+```
+
+`has_tls()` reports whether TLS was compiled in.
+
+## Vendored CivetWeb and Mbed TLS
 
 `src/civetweb.c` and `src/civetweb/*.inl` are CivetWeb at the commit in
 `src/civetweb/COMMIT`, with the patches in `tools/patches/` applied:
@@ -159,11 +179,19 @@ repeat {
   `mg_snprintf()`, which R CMD check requires.
 - `0002-reject-chunked-with-content-length.patch`: a request with both
   `Transfer-Encoding` and `Content-Length` is refused with 400.
+- `0003-mbedtls-no-stderr.patch`: the TLS paths report through `mg_cry()`
+  instead of stderr.
 
 `src/civetweb/external_mg_cry_internal_impl.inl` replaces CivetWeb's
 error logging, which would otherwise write to stderr or a log file.
 `tools/vendor-civetweb.sh [<sha>]` re-fetches CivetWeb and reapplies the
 patches.
+
+`src/mbedtls/` is Mbed TLS at the release in `src/mbedtls/VERSION`,
+fetched and checksum-verified by `tools/vendor-mbedtls.sh [<version>]`.
+`src/civetweb/civetwebr_mbedtls_config.h` holds this package's few
+changes to its default configuration. Copyright notices for both
+libraries are in `inst/COPYRIGHTS`.
 
 ## License
 

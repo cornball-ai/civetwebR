@@ -1,0 +1,4 @@
+#!/bin/sh
+# R CMD INSTALL --clean and R CMD build remove src/*.o themselves; the
+# Mbed TLS objects live one directory down.
+rm -f src/mbedtls/library/*.o
