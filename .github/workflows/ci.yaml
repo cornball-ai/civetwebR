@@ -8,6 +8,10 @@ on:
 
 env:
   _R_CHECK_FORCE_SUGGESTS_: "false"
+  # Every test that opens a socket is behind skip_on_cran(); without
+  # this a leg passes with the C code untested. Each leg also asserts
+  # below that nothing was skipped.
+  NOT_CRAN: "true"
 
 jobs:
   # R CMD check on Linux and macOS through r-ci. r-ci's run_tests fails
@@ -41,6 +45,16 @@ jobs:
 
       - name: Test
         run: ./run.sh run_tests
+
+      - name: The tests ran, none skipped
+        run: |
+          rout=$(find . -path '*.Rcheck/tests/testthat.Rout*' -print -quit)
+          if [ -z "$rout" ]; then
+            echo "no testthat.Rout - the tests did not run" >&2
+            exit 1
+          fi
+          grep -E "\[ FAIL [0-9]+ \| WARN [0-9]+ \| SKIP [0-9]+ \| PASS [0-9]+ \]" "$rout" | tail -1
+          grep -qE "\| SKIP 0 \| PASS [0-9]+ \]" "$rout"
 
       - name: Fail on check WARNINGs
         run: |
@@ -80,7 +94,6 @@ jobs:
   windows:
     runs-on: windows-latest
     env:
-      NOT_CRAN: "true"
       R_KEEP_PKG_SOURCE: yes
     steps:
       - uses: actions/checkout@v6
@@ -100,6 +113,18 @@ jobs:
           args: 'c("--no-manual", "--as-cran")'
           error-on: '"warning"'
           upload-snapshots: true
+
+      - name: The tests ran, with at most the interrupt test skipped
+        # run_server()'s interrupt test is skip_on_os("windows").
+        shell: bash
+        run: |
+          rout=$(find check -path '*.Rcheck/tests/testthat.Rout*' -print -quit)
+          if [ -z "$rout" ]; then
+            echo "no testthat.Rout - the tests did not run" >&2
+            exit 1
+          fi
+          grep -E "\[ FAIL [0-9]+ \| WARN [0-9]+ \| SKIP [0-9]+ \| PASS [0-9]+ \]" "$rout" | tail -1
+          grep -qE "\| SKIP [01] \| PASS [0-9]+ \]" "$rout"
 
   # CRAN's additional checks, in the r-hub containers that mirror them:
   # R built with clang's AddressSanitizer and UndefinedBehaviorSanitizer,
@@ -143,9 +168,15 @@ jobs:
       - name: Check under ${{ matrix.name }}
         run: r-check "$RUNNER_TEMP/check"
 
-      - name: No check ERRORs, and the tests ran
+      - name: No check ERRORs, and the tests ran with none skipped
         run: |
           log=$(find "$RUNNER_TEMP/check" -name 00check.log -print -quit)
           grep -E "^Status" "$log"
           ! grep -qE "^Status: .*ERROR" "$log"
-          grep -q "Running .testthat.R" "$log"
+          rout=$(find "$RUNNER_TEMP/check" -path '*.Rcheck/tests/testthat.Rout*' -print -quit)
+          if [ -z "$rout" ]; then
+            echo "no testthat.Rout - the tests did not run" >&2
+            exit 1
+          fi
+          grep -E "\[ FAIL [0-9]+ \| WARN [0-9]+ \| SKIP [0-9]+ \| PASS [0-9]+ \]" "$rout" | tail -1
+          grep -qE "\| SKIP 0 \| PASS [0-9]+ \]" "$rout"
