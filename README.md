@@ -5,7 +5,7 @@ An embedded, high-performance HTTP server for R based on the [CivetWeb](https://
 ## Key Features
 
 - **Thread Safety:** Uses a "Pull" model where multi-threaded C (50 worker threads) handles socket I/O and a single R thread processes logic, ensuring the R interpreter never crashes or deadlocks.
-- **WebSockets:** Full support for bi-directional, stateful communication (Open, Message, and Close events).
+- **WebSockets:** Full support for bi-directional, stateful communication (Connect, Open, Message, and Close events). The connect event runs in R before the handshake, so an `Origin` or cookie check can refuse an upgrade with a status.
 - **Routing:** Support for method-based routing and path grouping.
 - **Static Content:** Built-in static file serving with directory listing, breadcrumbs, and security guards.
 
@@ -14,8 +14,14 @@ An embedded, high-performance HTTP server for R based on the [CivetWeb](https://
 `civetwebR` makes it easy to build stateful, reactive applications:
 
 ```r
+on_ws("connect", function(req) {
+  # before the handshake: TRUE accepts, FALSE refuses with 403,
+  # list(status = 401L) refuses with that status
+  identical(req_header(req, "Origin"), "https://app.example")
+})
+
 on_ws("open", function(req) {
-  message(sprintf("Client %s connected", req$id))
+  message(sprintf("Client %s connected from %s", req$id, req$remote_addr))
 })
 
 on_ws("message", function(req) {
@@ -102,6 +108,42 @@ list(
   body = "data"
 )
 ```
+
+## Event API
+
+`serve()` and `run_server()` are loops over a lower-level driver that an
+application with its own event loop can call directly. One call to
+`next_event()` returns one event, or `NULL` after the timeout:
+
+```r
+srv <- start_server(port = 0L, register = FALSE,
+                    static_dirs = c("/assets/" = "www"))
+server_port(srv)   # the port the OS chose
+
+repeat {
+  ev <- next_event(100L, srv)
+  if (is.null(ev)) next
+  switch(ev$event,
+    request    = send_response(ev$id, list(status = 200L, body = "ok"), srv),
+    ws_connect = send_response(ev$id, TRUE, srv),
+    ws_open    = message("open ", ev$id, " from ", ev$remote_addr),
+    ws_message = ws_send(ev$id, ev$body, srv),
+    ws_close   = message("closed ", ev$id)
+  )
+}
+```
+
+- A `request` or `ws_connect` event must be answered with
+  `send_response()`; its worker thread waits until then.
+- A WebSocket connection keeps the `id` of its connect event for its
+  whole life. `ws_send()` writes to it, `ws_close()` sends a close frame,
+  and the `ws_close` event arrives once the client has answered it.
+- `static_dirs` maps URL prefixes to directories that CivetWeb serves
+  itself, with byte ranges; those requests never reach R.
+- `start_server(register = FALSE)` returns a handle without making it
+  the default server, so one process can run several servers.
+- Every event carries `remote_addr` and `remote_port`.
+- On Ctrl-C, `next_event()` signals an `interrupt` condition.
 
 ## Notes
 

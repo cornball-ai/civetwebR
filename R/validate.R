@@ -18,11 +18,54 @@
 
   port <- as.integer(port)
 
-  if (port < 1L || port > 65535L) {
-    stop("port must be between 1 and 65535", call. = FALSE)
+  if (port < 0L || port > 65535L) {
+    stop("port must be between 0 and 65535", call. = FALSE)
   }
 
   port
+}
+
+.validate_ws_path <- function(ws_path) {
+  if (!is.character(ws_path) || length(ws_path) != 1L || is.na(ws_path)) {
+    stop("ws_path must be character(1)", call. = FALSE)
+  }
+  if (!startsWith(ws_path, "/")) {
+    stop("ws_path must start with '/'", call. = FALSE)
+  }
+  ws_path
+}
+
+.validate_keep_alive <- function(keep_alive) {
+  if (!is.logical(keep_alive) || length(keep_alive) != 1L || is.na(keep_alive)) {
+    stop("keep_alive must be logical(1)", call. = FALSE)
+  }
+  keep_alive
+}
+
+# A named character vector: names are URL prefixes, values directories.
+# Returned with prefixes ending in "/" and directories normalized, or a
+# zero-length named character vector when NULL.
+.validate_static_dirs <- function(static_dirs) {
+  if (is.null(static_dirs) || length(static_dirs) == 0L) {
+    return(stats::setNames(character(0), character(0)))
+  }
+  if (!is.character(static_dirs) || is.null(names(static_dirs)) ||
+      anyNA(static_dirs) || any(!nzchar(names(static_dirs)))) {
+    stop("static_dirs must be a named character vector: c(prefix = dir)",
+         call. = FALSE)
+  }
+  prefixes <- names(static_dirs)
+  if (any(!startsWith(prefixes, "/"))) {
+    stop("static_dirs prefixes must start with '/'", call. = FALSE)
+  }
+  prefixes <- ifelse(endsWith(prefixes, "/"), prefixes, paste0(prefixes, "/"))
+  dirs <- unname(static_dirs)
+  if (any(!dir.exists(dirs))) {
+    stop("static_dirs directories must exist", call. = FALSE)
+  }
+  dirs <- normalizePath(dirs, winslash = "/", mustWork = TRUE)
+  dirs <- ifelse(endsWith(dirs, "/"), dirs, paste0(dirs, "/"))
+  stats::setNames(dirs, prefixes)
 }
 
 .validate_host <- function(host) {

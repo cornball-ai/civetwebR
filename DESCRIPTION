@@ -1,9 +1,12 @@
 Package: civetwebR
 Type: Package
 Title: Embedded HTTP Server for R with Static File Serving and Request Handling
-Version: 0.0.1
-Authors@R: 
-    person("Vedo", "Alagic", email = "vedo.alagic@outlook.com", role = c("aut", "cre"))
+Version: 0.0.1.1
+Authors@R: c(
+    person("Vedo", "Alagic", email = "vedo.alagic@outlook.com", role = c("aut", "cre")),
+    person("Troy", "Hernandez", email = "troy@cornball.ai", role = "aut",
+           comment = c(ORCID = "0009-0005-4248-604X")),
+    person("cornball.ai", role = "cph"))
 Description: Provides an R interface to the CivetWeb embedded C web server. 
     Enables starting HTTP servers, serving static files, and handling HTTP 
     requests directly from R.
@@ -11,8 +14,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 NeedsCompilation: yes
-Config/roxygen2/version: 8.0.0
-RoxygenNote: 8.0.0
+Config/roxygen2/version: 8.1.0
 Suggests: 
     testthat (>= 3.0.0),
     callr,
