@@ -244,21 +244,22 @@ test_that("static_dirs are served by civetweb with byte ranges, never reaching R
       con <- socketConnection("127.0.0.1", port, open = "r+b", blocking = TRUE)
       on.exit(close(con))
       writeLines(c("GET /assets/digits.txt HTTP/1.1", "Host: x",
-                   "Range: bytes=2-4", ""), con, sep = "\r\n")
+                   "Range: bytes=2-4", "Connection: close", ""),
+                 con, sep = "\r\n")
       flush(con)
-      status <- readLines(con, n = 1L, warn = FALSE)
-      # headers, then the body by Content-Length: it has no newline, and
-      # readLines() on macOS returns nothing for a line without one
-      len <- NA_integer_
+      # The whole response to EOF (the server closes after it), then
+      # split: readLines() on a socket returned early on macOS, both
+      # for the newline-less body and mid-headers.
+      bytes <- raw(0)
       repeat {
-        line <- readLines(con, n = 1L, warn = FALSE)
-        if (length(line) == 0L || line == "" || line == "\r") break
-        if (grepl("^Content-Length:", line, ignore.case = TRUE)) {
-          len <- as.integer(trimws(sub("^[^:]+:", "", line)))
-        }
+        chunk <- readBin(con, "raw", 4096L)
+        if (length(chunk) == 0L) break
+        bytes <- c(bytes, chunk)
       }
-      body <- if (is.na(len)) "" else rawToChar(readBin(con, "raw", len))
-      list(status = status, tail = body)
+      txt <- rawToChar(bytes)
+      parts <- strsplit(txt, "\r\n\r\n", fixed = TRUE)[[1]]
+      status <- strsplit(parts[1], "\r\n", fixed = TRUE)[[1]][1]
+      list(status = status, tail = if (length(parts) > 1L) parts[2] else "")
     },
     args = list(port)
   )
