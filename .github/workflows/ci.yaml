@@ -1,0 +1,145 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  _R_CHECK_FORCE_SUGGESTS_: "false"
+
+jobs:
+  # R CMD check on Linux and macOS through r-ci. r-ci's run_tests fails
+  # only on ERRORs, so a separate step gates on WARNINGs.
+  ci:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-latest, backend: RAPT}
+          - {os: macos-latest,  backend: ''}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup r-ci
+        uses: eddelbuettel/github-actions/r-ci@master
+        with:
+          backend: ${{ matrix.backend }}
+
+      - name: Dependencies
+        # install_all includes Suggests, so the testthat suite runs
+        # instead of being skipped.
+        run: ./run.sh install_all
+
+      - name: Test
+        run: ./run.sh run_tests
+
+      - name: Fail on check WARNINGs
+        run: |
+          log=$(find . -name 00check.log -print -quit)
+          if [ -z "$log" ]; then
+            echo "no 00check.log found - the check did not run" >&2
+            exit 1
+          fi
+          grep -E "^Status" "$log"
+          # Any compiler or linker warning is a finding, with one
+          # exception: the GitHub macOS runners carry a libR built for a
+          # newer deployment target than R targets, so every link there
+          # emits "ld: warning: building for macOS-11.0, but linking
+          # with dylib ... built for newer version". CRAN's macOS
+          # builders do not. Nothing else is tolerated.
+          if grep -E "warning:" "$log" | grep -qv "building for macOS"; then
+            echo "unexpected compiler/linker warnings:" >&2
+            grep -E "warning:" "$log" | grep -v "building for macOS" >&2
+            exit 1
+          fi
+          # No warning-level check either. The install WARNING is excused
+          # only when the tolerated ld noise is what triggered it, so it
+          # cannot quietly cover a real finding.
+          other=$(grep -E "^\* checking .*\.\.\. (ERROR|WARNING)" "$log") || true
+          if grep -q "building for macOS" "$log"; then
+            other=$(echo "$other" | grep -v "can be installed") || true
+          fi
+          if [ -n "$other" ]; then
+            echo "check reported:" >&2
+            echo "$other" >&2
+            grep -B2 -A8 -E "\.\.\. (ERROR|WARNING)" "$log" >&2
+            exit 1
+          fi
+
+  # Windows: the bundled Mbed TLS and civetweb compile under Rtools'
+  # MinGW, with bcrypt and ws2_32 linked. r-ci has no Windows runner.
+  windows:
+    runs-on: windows-latest
+    env:
+      NOT_CRAN: "true"
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          args: 'c("--no-manual", "--as-cran")'
+          error-on: '"warning"'
+          upload-snapshots: true
+
+  # CRAN's additional checks, in the r-hub containers that mirror them:
+  # R built with clang's AddressSanitizer and UndefinedBehaviorSanitizer,
+  # R built with gcc's (bounds-strict included), and a valgrind-
+  # instrumented R. Each container's r-check script installs the
+  # dependencies with pak, runs R CMD check with the platform's
+  # arguments, and fails on any sanitizer or memcheck report in the
+  # example and test output. tools/sanitize.sh is the local counterpart.
+  memtests:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {name: clang-asan, image: "ghcr.io/r-hub/containers/clang-asan:latest"}
+          - {name: gcc-asan,   image: "ghcr.io/r-hub/containers/gcc-asan:latest"}
+          - {name: valgrind,   image: "ghcr.io/r-hub/containers/valgrind:latest"}
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: openssl and curl for the TLS tests
+        # Without them those tests skip, and the TLS paths are the ones
+        # most worth running under a sanitizer.
+        run: |
+          if command -v dnf > /dev/null 2>&1; then
+            dnf install -y openssl curl
+          else
+            apt-get update -qq && apt-get install -y -qq openssl curl
+          fi
+          openssl version && curl --version | head -1
+
+      - name: Build
+        run: |
+          mkdir -p "$RUNNER_TEMP/check"
+          R CMD build --no-build-vignettes --no-manual .
+          mv civetwebR_*.tar.gz "$RUNNER_TEMP/check/"
+
+      - name: Check under ${{ matrix.name }}
+        run: r-check "$RUNNER_TEMP/check"
+
+      - name: No check ERRORs, and the tests ran
+        run: |
+          log=$(find "$RUNNER_TEMP/check" -name 00check.log -print -quit)
+          grep -E "^Status" "$log"
+          ! grep -qE "^Status: .*ERROR" "$log"
+          grep -q "Running .testthat.R" "$log"

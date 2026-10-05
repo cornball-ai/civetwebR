@@ -20,14 +20,7 @@ mg_cry_internal_impl(const struct mg_connection *conn,
 	(void)func;
 	(void)line;
 
-#if defined(GCC_DIAGNOSTIC)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-#endif
 	IGNORE_UNUSED_RESULT(vsnprintf_impl(buf, sizeof(buf), fmt, ap));
-#if defined(GCC_DIAGNOSTIC)
-#pragma GCC diagnostic pop
-#endif
 	buf[sizeof(buf) - 1] = 0;
 
 	if (conn && conn->phys_ctx && conn->phys_ctx->callbacks.log_message) {

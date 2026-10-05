@@ -247,13 +247,18 @@ test_that("static_dirs are served by civetweb with byte ranges, never reaching R
                    "Range: bytes=2-4", ""), con, sep = "\r\n")
       flush(con)
       status <- readLines(con, n = 1L, warn = FALSE)
-      body <- character(0)
+      # headers, then the body by Content-Length: it has no newline, and
+      # readLines() on macOS returns nothing for a line without one
+      len <- NA_integer_
       repeat {
         line <- readLines(con, n = 1L, warn = FALSE)
-        if (length(line) == 0L) break
-        body <- c(body, line)
+        if (length(line) == 0L || line == "" || line == "\r") break
+        if (grepl("^Content-Length:", line, ignore.case = TRUE)) {
+          len <- as.integer(trimws(sub("^[^:]+:", "", line)))
+        }
       }
-      list(status = status, tail = body[length(body)])
+      body <- if (is.na(len)) "" else rawToChar(readBin(con, "raw", len))
+      list(status = status, tail = body)
     },
     args = list(port)
   )

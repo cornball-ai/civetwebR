@@ -181,6 +181,9 @@ openssl req -x509 -newkey rsa:2048 -nodes -days 365 -subj /CN=localhost \
   `Transfer-Encoding` and `Content-Length` is refused with 400.
 - `0003-mbedtls-no-stderr.patch`: the TLS paths report through `mg_cry()`
   instead of stderr.
+- `0004-no-format-nonliteral-pragma.patch`: no pragma suppresses
+  `-Wformat-nonliteral`, which `R CMD check --as-cran` treats as an
+  important diagnostic.
 
 `src/civetweb/external_mg_cry_internal_impl.inl` replaces CivetWeb's
 error logging, which would otherwise write to stderr or a log file.
@@ -192,6 +195,18 @@ fetched and checksum-verified by `tools/vendor-mbedtls.sh [<version>]`.
 `src/civetweb/civetwebr_mbedtls_config.h` holds this package's few
 changes to its default configuration. Copyright notices for both
 libraries are in `inst/COPYRIGHTS`.
+
+## Checks
+
+CI runs `R CMD check` on Linux, macOS and Windows and, in the r-hub
+containers that mirror CRAN's additional checks, under clang's and gcc's
+AddressSanitizer and UndefinedBehaviorSanitizer and under valgrind.
+`tools/sanitize.sh` runs the same two memory checks locally over the
+whole test suite:
+
+```sh
+tools/sanitize.sh
+```
 
 ## License
 

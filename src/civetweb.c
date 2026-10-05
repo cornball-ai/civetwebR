@@ -3181,7 +3181,7 @@ mg_vsnprintf(const struct mg_connection *conn,
 
 #if defined(__clang__)
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-nonliteral"
+/* civetwebR: -Wformat-nonliteral is not suppressed; R CMD check flags that */
 	/* Using fmt as a non-literal is intended here, since it is mostly called
 	 * indirectly by mg_snprintf */
 #endif
@@ -3469,7 +3469,7 @@ mg_cry_internal_impl(const struct mg_connection *conn,
 
 #if defined(GCC_DIAGNOSTIC)
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+/* civetwebR: -Wformat-nonliteral is not suppressed; R CMD check flags that */
 #endif
 
 	IGNORE_UNUSED_RESULT(vsnprintf_impl(buf, sizeof(buf), fmt, ap));
@@ -7143,7 +7143,7 @@ mg_send_chunk(struct mg_connection *conn,
 /* This block forwards format strings to printf implementations,
  * so we need to disable the format-nonliteral warning. */
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+/* civetwebR: -Wformat-nonliteral is not suppressed; R CMD check flags that */
 #endif
 
 
@@ -19593,7 +19593,7 @@ mg_connect_websocket_client_impl(const struct mg_client_options *client_options,
 
 #if defined(__clang__)
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-nonliteral"
+/* civetwebR: -Wformat-nonliteral is not suppressed; R CMD check flags that */
 #endif
 
 	/* Establish the client connection and request upgrade */
