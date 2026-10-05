@@ -1,7 +1,7 @@
 Package: civetwebR
 Type: Package
 Title: Embedded HTTP Server for R with Static File Serving and Request Handling
-Version: 0.0.1
+Version: 0.0.1.1
 Authors@R: 
     person("Vedo", "Alagic", email = "vedo.alagic@outlook.com", role = c("aut", "cre"))
 Description: Provides an R interface to the CivetWeb embedded C web server. 
