@@ -289,6 +289,43 @@ test_that("static_dirs are served by civetweb with byte ranges, never reaching R
   expect_equal(res$tail, "234")
 })
 
+test_that("a request with both Transfer-Encoding and Content-Length is refused with 400 before reaching R", {
+  skip_on_cran()
+  skip_if_not_installed("callr")
+
+  srv <- start_server(port = 0L, register = FALSE)
+  on.exit(stop_server(srv), add = TRUE)
+  port <- server_port(srv)
+
+  p <- callr::r_bg(
+    function(port) {
+      con <- socketConnection("127.0.0.1", port, open = "r+b", blocking = TRUE)
+      on.exit(close(con))
+      writeLines(c("POST /x HTTP/1.1", "Host: x",
+                   "Transfer-Encoding: chunked", "Content-Length: 5",
+                   "", "0", ""), con, sep = "\r\n")
+      flush(con)
+      readLines(con, n = 1L, warn = FALSE)
+    },
+    args = list(port)
+  )
+  on.exit(if (p$is_alive()) p$kill(), add = TRUE)
+
+  deadline <- Sys.time() + 3
+  got_request <- FALSE
+  while (Sys.time() < deadline && p$is_alive()) {
+    ev <- next_event(50L, srv)
+    if (!is.null(ev) && ev$event == "request") {
+      got_request <- TRUE
+      send_response(ev$id, "should not happen", srv)
+    }
+  }
+  expect_false(got_request)
+
+  p$wait(5000)
+  expect_match(p$get_result(), "400")
+})
+
 test_that("run_server() returns cleanly on interrupt", {
   skip_on_cran()
   skip_if_not_installed("callr")

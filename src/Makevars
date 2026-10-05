@@ -1,1 +1,6 @@
-PKG_CPPFLAGS = -DNO_SSL -DNO_CGI -DUSE_WEBSOCKET -DUSE_IPV6
+# civetweb build flags. USE_ enables, NO_ disables.
+#   -Icivetweb: the .inl pieces civetweb.c #includes live in src/civetweb/
+#   MG_EXTERNAL_FUNCTION_mg_cry_internal_impl: our mg_cry (no stderr, no
+#   log files), see src/civetweb/external_mg_cry_internal_impl.inl
+PKG_CPPFLAGS = -DNO_SSL -DNO_CGI -DUSE_WEBSOCKET -DUSE_IPV6 \
+  -DMG_EXTERNAL_FUNCTION_mg_cry_internal_impl -Icivetweb

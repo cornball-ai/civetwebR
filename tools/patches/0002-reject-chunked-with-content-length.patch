@@ -1,0 +1,19 @@
+--- a/src/civetweb.c
++++ b/src/civetweb.c
+@@ -19218,7 +19218,15 @@
+ 	                      "Transfer-Encoding"))
+ 	     != NULL)
+ 	    && mg_strcasecmp(cl, "identity")) {
+-		if (mg_strcasecmp(cl, "chunked")) {
++		/* civetwebR: a request carrying both Transfer-Encoding and
++		 * Content-Length is ambiguous (RFC 7230 section 3.3.3) and is
++		 * the basis of request smuggling, so it is rejected. Upstream
++		 * commit 588860e has the same intent but does not compile. */
++		if (mg_strcasecmp(cl, "chunked")
++		    || (get_header(conn->request_info.http_headers,
++		                   conn->request_info.num_headers,
++		                   "Content-Length")
++		        != NULL)) {
+ 			mg_snprintf(conn,
+ 			            NULL, /* No truncation check for ebuf */
+ 			            ebuf,

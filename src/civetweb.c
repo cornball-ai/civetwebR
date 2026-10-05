@@ -3603,7 +3603,12 @@ mg_get_request_info(const struct mg_connection *conn)
 		struct mg_workerTLS *tls =
 		    (struct mg_workerTLS *)pthread_getspecific(sTlsKey);
 
-		sprintf(txt, "%03i", conn->response_info.status_code);
+		mg_snprintf(conn,
+		            NULL,
+		            txt,
+		            sizeof(txt),
+		            "%03i",
+		            conn->response_info.status_code);
 		if (strlen(txt) == 3) {
 			memcpy(tls->txtbuf, txt, 4);
 		} else {
@@ -3773,7 +3778,8 @@ mg_construct_local_link(const struct mg_connection *conn,
 			char server_ip[48];
 
 			if (port != default_port) {
-				sprintf(portstr, ":%u", (unsigned)port);
+				mg_snprintf(
+				    conn, NULL, portstr, sizeof(portstr), ":%u", (unsigned)port);
 			} else {
 				portstr[0] = 0;
 			}
@@ -4817,7 +4823,12 @@ mg_send_http_redirect(struct mg_connection *conn,
 	    target_url,
 	    target_url);
 	content_len = strlen(reply);
-	sprintf(content_len_text, "%lu", (unsigned long)content_len);
+	mg_snprintf(conn,
+	            NULL,
+	            content_len_text,
+	            sizeof(content_len_text),
+	            "%lu",
+	            (unsigned long)content_len);
 #endif
 
 	/* Send all required headers */
@@ -7102,7 +7113,7 @@ mg_send_chunk(struct mg_connection *conn,
 	int t;
 
 	/* First store the length information in a text buffer. */
-	sprintf(lenbuf, "%x\r\n", chunk_len);
+	mg_snprintf(conn, NULL, lenbuf, sizeof(lenbuf), "%x\r\n", chunk_len);
 	lenbuf_len = strlen(lenbuf);
 
 	/* Then send length information, chunk and terminating \r\n. */
@@ -9468,11 +9479,15 @@ mg_modify_passwords_file_ha1(const char *fname,
 				/* Found the user: change the password hash or drop the user
 				 */
 				if ((ha1 != NULL) && (!found)) {
-					i = sprintf(temp_file + temp_file_offs,
+					mg_snprintf(NULL,
+					            NULL,
+					            temp_file + temp_file_offs,
+					            (size_t)(temp_buf_len - temp_file_offs),
 					            "%s:%s:%s\n",
 					            user,
 					            domain,
 					            ha1);
+					i = (int)strlen(temp_file + temp_file_offs);
 					if (i < 1) {
 						fclose(fp);
 						mg_free(temp_file);
@@ -9483,7 +9498,15 @@ mg_modify_passwords_file_ha1(const char *fname,
 				found = 1;
 			} else {
 				/* Copy existing user, including password hash */
-				i = sprintf(temp_file + temp_file_offs, "%s:%s:%s\n", u, d, h);
+				mg_snprintf(NULL,
+				            NULL,
+				            temp_file + temp_file_offs,
+				            (size_t)(temp_buf_len - temp_file_offs),
+				            "%s:%s:%s\n",
+				            u,
+				            d,
+				            h);
+				i = (int)strlen(temp_file + temp_file_offs);
 				if (i < 1) {
 					fclose(fp);
 					mg_free(temp_file);
@@ -13200,7 +13223,12 @@ dav_lock_file(struct mg_connection *conn, const char *path)
 			if (dav_lock[i].path[0] == 0) {
 				char s[32];
 				dav_lock[i].locktime = mg_get_current_time_ns();
-				sprintf(s, "%" UINT64_FMT, (uint64_t)dav_lock[i].locktime);
+				mg_snprintf(conn,
+				            NULL,
+				            s,
+				            sizeof(s),
+				            "%" UINT64_FMT,
+				            (uint64_t)dav_lock[i].locktime);
 				mg_md5(dav_lock[i].token,
 				       link_buf,
 				       "\x01",
@@ -19206,7 +19234,15 @@ get_request(struct mg_connection *conn, char *ebuf, size_t ebuf_len, int *err)
 	                      "Transfer-Encoding"))
 	     != NULL)
 	    && mg_strcasecmp(cl, "identity")) {
-		if (mg_strcasecmp(cl, "chunked")) {
+		/* civetwebR: a request carrying both Transfer-Encoding and
+		 * Content-Length is ambiguous (RFC 7230 section 3.3.3) and is
+		 * the basis of request smuggling, so it is rejected. Upstream
+		 * commit 588860e has the same intent but does not compile. */
+		if (mg_strcasecmp(cl, "chunked")
+		    || (get_header(conn->request_info.http_headers,
+		                   conn->request_info.num_headers,
+		                   "Content-Length")
+		        != NULL)) {
 			mg_snprintf(conn,
 			            NULL, /* No truncation check for ebuf */
 			            ebuf,
@@ -21036,8 +21072,11 @@ get_system_name(char **sysName)
 
 	wowRet = IsWow64Process(GetCurrentProcess(), &isWoW);
 
-	sprintf(name,
-	        "Windows %u.%u%s",
+	mg_snprintf(NULL,
+	            NULL,
+	            name,
+	            sizeof(name),
+	            "Windows %u.%u%s",
 	        (unsigned)dwMajorVersion,
 	        (unsigned)dwMinorVersion,
 	        (wowRet ? (isWoW ? " (WoW64)" : "") : " (?)"));
