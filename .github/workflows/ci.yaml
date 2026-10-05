@@ -23,6 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: checkbashisms (macOS)
+        # Without it the check's top-level-files step reports itself
+        # incomplete, which is a WARNING under --as-cran.
+        if: runner.os == 'macOS'
+        run: brew install checkbashisms
+
       - name: Setup r-ci
         uses: eddelbuettel/github-actions/r-ci@master
         with:

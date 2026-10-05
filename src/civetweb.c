@@ -638,8 +638,18 @@ typedef const char *SOCK_OPT_TYPE;
 #define W_OK (2) /* http://msdn.microsoft.com/en-us/library/1w06ktdy.aspx */
 #endif
 #define _POSIX_
+#if defined(__MINGW32__)
+/* civetwebR: R's Rtools toolchain uses MinGW's C99 stdio and gcc checks
+ * formats as gnu_printf, where "%I64d" parses as the 'I' flag, width 64
+ * and a plain %d: a format error to gcc, and a WARNING to R CMD check.
+ * The C99 macros are the right spelling for that toolchain. */
+#include <inttypes.h>
+#define INT64_FMT PRId64
+#define UINT64_FMT PRIu64
+#else
 #define INT64_FMT "I64d"
 #define UINT64_FMT "I64u"
+#endif
 
 #define WINCDECL __cdecl
 #define vsnprintf_impl _vsnprintf

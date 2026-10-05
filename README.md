@@ -184,6 +184,8 @@ openssl req -x509 -newkey rsa:2048 -nodes -days 365 -subj /CN=localhost \
 - `0004-no-format-nonliteral-pragma.patch`: no pragma suppresses
   `-Wformat-nonliteral`, which `R CMD check --as-cran` treats as an
   important diagnostic.
+- `0005-mingw-int64-format.patch`: 64-bit formats are `PRId64` under
+  MinGW, where Rtools' gcc reads `%I64d` as a plain `%d`.
 
 `src/civetweb/external_mg_cry_internal_impl.inl` replaces CivetWeb's
 error logging, which would otherwise write to stderr or a log file.

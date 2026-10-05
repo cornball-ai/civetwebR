@@ -15,6 +15,11 @@
 - The static_dirs test read a body without a trailing newline through
   `readLines()`, which returns nothing for it on macOS; it reads by
   Content-Length now.
+- On Windows, civetweb's Range header parser formatted 64-bit integers
+  as `%I64d`, which Rtools' gcc reads as a plain `%d` and R CMD check
+  reports as a significant warning; MinGW builds use `PRId64` now
+  (tools/patches/0005).
+- `run.sh`, which r-ci drops into the checkout, is build-ignored.
 
 # civetwebR 0.0.1.3
 
