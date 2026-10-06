@@ -1,7 +1,7 @@
 Package: civetwebR
 Type: Package
 Title: Embedded HTTP Server for R with Static File Serving and Request Handling
-Version: 0.0.1.4
+Version: 0.0.1.5
 Authors@R: c(
     person("Vedo", "Alagic", email = "vedo.alagic@outlook.com", role = c("aut", "cre")),
     person("Troy", "Hernandez", email = "troy@cornball.ai", role = "aut",

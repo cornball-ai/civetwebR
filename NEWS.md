@@ -1,3 +1,18 @@
+# civetwebR 0.0.1.5
+
+- `ws_message` events carry `opcode` (1 text, 2 binary, 0 continuation),
+  so a receiver can tell the first frame of a fragmented message from
+  the continuations that follow it.
+- CivetWeb answers WebSocket pings with pongs (`enable_websocket_ping_pong`
+  is on), and a close frame from the client is echoed back with its
+  status code before the `ws_close` event, as RFC 6455 has it. Neither
+  control frame reaches R.
+- A refused WebSocket connect (`FALSE` or a status from R) sent only an
+  error body, no status line or headers: CivetWeb's response-header
+  functions decline to write on a connection it has already classed as
+  a WebSocket, and `mg_send_http_error()` goes through them. The
+  refusal is written whole now, `HTTP/1.1 403 Forbidden` and all.
+
 # civetwebR 0.0.1.4
 
 - CI (.github/workflows/ci.yaml): R CMD check on Linux and macOS through
