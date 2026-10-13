@@ -44,6 +44,20 @@ jobs:
         # instead of being skipped.
         run: ./run.sh install_all
 
+      - name: R CMD build reports nothing
+        # Its WARNINGs go to stdout with exit 0 and never reach
+        # 00check.log: an .rds saved in serialization version 3 adds
+        # Depends: R (>= 3.5.0) to the tarball, invalid files are
+        # excluded silently. run_tests builds again; a build is seconds.
+        run: |
+          R CMD build --no-build-vignettes --no-manual . > build.log 2>&1 || { cat build.log; exit 1; }
+          cat build.log
+          if grep -qE "WARNING|excluding invalid files|now depends on R" build.log; then
+            echo "R CMD build reported a problem (above)" >&2
+            exit 1
+          fi
+          rm -f build.log civetwebR_*.tar.gz
+
       - name: Test
         run: ./run.sh run_tests
 
@@ -113,6 +127,18 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      - name: R CMD build reports nothing
+        # The same gate as the r-ci jobs; see there.
+        shell: bash
+        run: |
+          R CMD build --no-build-vignettes --no-manual . > build.log 2>&1 || { cat build.log; exit 1; }
+          cat build.log
+          if grep -qE "WARNING|excluding invalid files|now depends on R" build.log; then
+            echo "R CMD build reported a problem (above)" >&2
+            exit 1
+          fi
+          rm -f build.log civetwebR_*.tar.gz
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           args: 'c("--no-manual", "--as-cran")'
@@ -169,10 +195,18 @@ jobs:
           fi
           openssl version && curl --version | head -1
 
-      - name: Build
+      - name: Build, and R CMD build reports nothing
+        # The same gate as the r-ci jobs; see there. POSIX sh: this
+        # container has no bash for the step.
         run: |
           mkdir -p "$RUNNER_TEMP/check"
-          R CMD build --no-build-vignettes --no-manual .
+          R CMD build --no-build-vignettes --no-manual . > build.log 2>&1 || { cat build.log; exit 1; }
+          cat build.log
+          if grep -qE "WARNING|excluding invalid files|now depends on R" build.log; then
+            echo "R CMD build reported a problem (above)" >&2
+            exit 1
+          fi
+          rm -f build.log
           mv civetwebR_*.tar.gz "$RUNNER_TEMP/check/"
 
       - name: Check under ${{ matrix.name }}
