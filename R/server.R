@@ -30,6 +30,21 @@
 #' @param register Logical. Make this the default server. Default
 #'   \code{TRUE}.
 #' @return A server handle (class \code{cw_server}), invisibly.
+#' @examples
+#' # port 0: the OS picks a free port; register = FALSE: a handle only
+#' srv <- start_server(port = 0L, register = FALSE)
+#' srv
+#' server_port(srv)
+#' stop_server(srv)
+#'
+#' # a directory served by CivetWeb itself, never reaching R
+#' www <- tempfile("www")
+#' dir.create(www)
+#' writeLines("hi", file.path(www, "index.html"))
+#' srv <- start_server(port = 0L, register = FALSE,
+#'                     static_dirs = c("/assets/" = www))
+#' stop_server(srv)
+#' unlink(www, recursive = TRUE)
 #' @export
 start_server <- function(port = 8080L, host = "127.0.0.1", num_threads = 50L,
                          max_body_size = 8 * 1024 * 1024,
@@ -82,6 +97,13 @@ start_server <- function(port = 8080L, host = "127.0.0.1", num_threads = 50L,
 #' @param server A server handle from \code{start_server()}, or NULL for
 #'   the default server.
 #' @return Invisibly returns TRUE.
+#' @examples
+#' srv <- start_server(port = 0L, register = FALSE)
+#' stop_server(srv)
+#'
+#' # the default server
+#' start_server(port = 0L)
+#' stop_server()
 #' @export
 stop_server <- function(server = NULL) {
     if (is.null(server)) {
@@ -110,6 +132,10 @@ stop_server <- function(server = NULL) {
 #'
 #' @inheritParams stop_server
 #' @return Integer port.
+#' @examples
+#' srv <- start_server(port = 0L, register = FALSE)
+#' server_port(srv)
+#' stop_server(srv)
 #' @export
 server_port <- function(server = NULL) {
     .Call(civetweb_server_port, .server_ptr(server), PACKAGE = "civetwebR")
@@ -121,6 +147,8 @@ server_port <- function(server = NULL) {
 #' TLS sources provide on every platform.
 #'
 #' @return Logical.
+#' @examples
+#' has_tls()
 #' @export
 has_tls <- function() {
     .Call(civetweb_has_tls, PACKAGE = "civetwebR")
@@ -130,7 +158,13 @@ has_tls <- function() {
 print.cw_server <- function(x, ...) {
     running <- .Call(civetweb_server_running, x$ptr, PACKAGE = "civetwebR")
     scheme <- if (isTRUE(x$tls)) "https" else "http"
-    cat("<cw_server> ", scheme, "://", x$host, ":", x$port, "  ",
+    # port 0 asked the OS to choose; show what it chose while it lives
+    port <- if (running && identical(as.integer(x$port), 0L)) {
+        server_port(x)
+    } else {
+        x$port
+    }
+    cat("<cw_server> ", scheme, "://", x$host, ":", port, "  ",
         if (running) "running" else "stopped", "\n", sep = "")
     invisible(x)
 }

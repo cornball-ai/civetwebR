@@ -7,6 +7,19 @@
 #' @param list_dirs Logical. Enable directory listing.
 #' @param template Character(1) or NULL. Optional template path override.
 #'
+#' @return A handler: a function of a request that returns a response
+#'   list (\code{status}, \code{headers}, raw \code{body}), as
+#'   \code{serve(static = )} installs it.
+#' @examples
+#' www <- tempfile("www")
+#' dir.create(www)
+#' writeLines("<h1>hi</h1>", file.path(www, "index.html"))
+#' h <- static_files(www, prefix = "/")
+#' res <- h(list(path = "/index.html"))
+#' res$status
+#' rawToChar(res$body)
+#' h(list(path = "/missing.html"))$status
+#' unlink(www, recursive = TRUE)
 #' @export
 static_files <- function(dir, prefix = "/", index = c("index.html"),
                          cache_control = NULL, list_dirs = FALSE,

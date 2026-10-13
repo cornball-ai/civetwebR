@@ -17,3 +17,11 @@ Answers every request still waiting on R with 503, closes the
 connections and releases the server. Stopping the default server clears
 it.
 }
+\examples{
+srv <- start_server(port = 0L, register = FALSE)
+stop_server(srv)
+
+# the default server
+start_server(port = 0L)
+stop_server()
+}

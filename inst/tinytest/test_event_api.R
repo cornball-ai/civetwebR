@@ -24,6 +24,9 @@ local({
     on.exit(stop_server(srv), add = TRUE)
     port <- server_port(srv)
     expect_true(port > 0L)
+    # the handle prints the port the OS chose, not the 0 it was asked for
+    expect_match(paste(capture.output(print(srv)), collapse = ""),
+                 paste0("127.0.0.1:", port, "  running"), fixed = TRUE)
 
     p <- bg_get(port, "/hello?x=1")
     on.exit(if (p$is_alive()) p$kill(), add = TRUE)

@@ -60,3 +60,19 @@ and friends use when no \code{server} is given. With
 \code{register = FALSE} the server is only returned, so one R process
 can run several.
 }
+\examples{
+# port 0: the OS picks a free port; register = FALSE: a handle only
+srv <- start_server(port = 0L, register = FALSE)
+srv
+server_port(srv)
+stop_server(srv)
+
+# a directory served by CivetWeb itself, never reaching R
+www <- tempfile("www")
+dir.create(www)
+writeLines("hi", file.path(www, "index.html"))
+srv <- start_server(port = 0L, register = FALSE,
+                    static_dirs = c("/assets/" = www))
+stop_server(srv)
+unlink(www, recursive = TRUE)
+}

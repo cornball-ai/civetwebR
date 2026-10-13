@@ -12,3 +12,6 @@ Logical.
 TRUE when the package was built with TLS support, which the bundled Mbed
 TLS sources provide on every platform.
 }
+\examples{
+has_tls()
+}

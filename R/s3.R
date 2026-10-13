@@ -33,7 +33,14 @@ print.cw_response <- function(x, ...) {
 
 #' Helper to extract a header from a request
 #' @param req A cw_request object.
-#' @param key Header name.
+#' @param key Header name, matched without regard to case.
+#' @return The header's value as a string, or NULL when the request has
+#'   no such header.
+#' @examples
+#' req <- structure(list(headers = c("Content-Type" = "application/json")),
+#'                  class = "cw_request")
+#' req_header(req, "content-type")
+#' req_header(req, "Accept")
 #' @export
 req_header <- function(req, key) {
     if (!inherits(req, "cw_request")) {
@@ -52,6 +59,13 @@ req_header <- function(req, key) {
 #' Helper to extract a query parameter from a request
 #' @param req A cw_request object.
 #' @param key Parameter name.
+#' @return The parameter's value as a string, or NULL when the query has
+#'   no such parameter.
+#' @examples
+#' req <- structure(list(query_params = list(page = "2")),
+#'                  class = "cw_request")
+#' req_query(req, "page")
+#' req_query(req, "missing")
 #' @export
 req_query <- function(req, key) {
     if (!inherits(req, "cw_request")) {

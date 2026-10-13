@@ -21,3 +21,9 @@ Sends a close frame with \code{code}; the client answers and the
 connection ends, which arrives later as a \code{ws_close} event.
 Further \code{ws_send()} calls on the id return \code{FALSE}.
 }
+\examples{
+srv <- start_server(port = 0L, register = FALSE)
+# no connection has this id, so nothing is written
+ws_close(1L, 1000L, srv)
+stop_server(srv)
+}
