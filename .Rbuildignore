@@ -1,13 +1,9 @@
 ^\.git$
 ^\.gitignore$
 ^env/
-^\.devcontainer/
-^\.vscode/
 ^README\.md$
 ^LICENSE\.md$
-^init\.R$
 ^\.github$
-^\.Rprofile$
 ^run\.sh$
 ^src/.*\.o$
 ^src/.*\.so$

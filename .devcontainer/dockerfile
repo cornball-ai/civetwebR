@@ -1,3 +1,0 @@
-FROM rocker/verse:4.5.3
-COPY setup.sh /usr/local/bin/setup.sh
-RUN /usr/local/bin/setup.sh
