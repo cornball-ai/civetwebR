@@ -1,3 +1,18 @@
+# civetwebR 0.0.1.7
+
+- The maintainer is Troy Hernandez, with the go-ahead of Vedo Alagic,
+  who wrote the package and stays author and copyright holder
+  (vedoa/civetwebR#1). URL and BugReports point at
+  cornball-ai/civetwebR, where issues are open.
+- DESCRIPTION for CRAN: a Title without "for R", 'CivetWeb' and
+  'Mbed TLS' quoted and linked, a Description that says what the
+  package does, and no trailing whitespace. Authors@R names every
+  holder found in the bundled sources' headers: Aladdin Enterprises
+  for the MD5 implementation in src/civetweb/md5.inl (L. Peter
+  Deutsch; its zlib-style notice is reproduced in inst/COPYRIGHTS)
+  and the public-domain SHA-1 authors of src/civetweb/sha1.inl as
+  contributors.
+
 # civetwebR 0.0.1.6
 
 - The development stack is the tinyverse's: tinytest for the tests
