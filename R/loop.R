@@ -76,6 +76,24 @@
 #' @param server A server handle from \code{start_server()}, or NULL for
 #'   the default server.
 #' @return A \code{cw_request}, or \code{NULL} on timeout.
+#' @examples
+#' srv <- start_server(port = 0L, register = FALSE)
+#' # one turn of an event loop: nothing arrives within 10 ms, so NULL
+#' ev <- next_event(10L, srv)
+#' is.null(ev)
+#' stop_server(srv)
+#'
+#' \dontrun{
+#' # the loop an application runs, until interrupted
+#' repeat {
+#'     ev <- next_event(100L, srv)
+#'     if (is.null(ev)) next
+#'     switch(ev$event,
+#'            request    = send_response(ev$id, "ok", srv),
+#'            ws_connect = send_response(ev$id, TRUE, srv),
+#'            ws_message = ws_send(ev$id, ev$body, srv))
+#' }
+#' }
 #' @export
 next_event <- function(timeout_ms = 100L, server = NULL) {
     timeout_ms <- .validate_timeout_ms(timeout_ms)
@@ -96,6 +114,13 @@ next_event <- function(timeout_ms = 100L, server = NULL) {
 #'   status.
 #' @inheritParams next_event
 #' @return NULL, invisibly.
+#' @examples
+#' srv <- start_server(port = 0L, register = FALSE)
+#' ev <- next_event(10L, srv)
+#' if (!is.null(ev) && ev$event == "request") {
+#'     send_response(ev$id, list(status = 200L, body = "ok"), srv)
+#' }
+#' stop_server(srv)
 #' @export
 send_response <- function(id, res, server = NULL) {
     .send_response(id, res, server)
@@ -108,6 +133,11 @@ send_response <- function(id, res, server = NULL) {
 #' @inheritParams next_event
 #' @return \code{TRUE} if the frame was written, \code{FALSE} if the
 #'   connection is not open.
+#' @examples
+#' srv <- start_server(port = 0L, register = FALSE)
+#' # no connection has this id, so nothing is written
+#' ws_send(1L, "hello", srv)
+#' stop_server(srv)
 #' @export
 ws_send <- function(id, data, server = NULL) {
     .Call(civetweb_ws_send, .server_ptr(server), as.integer(id), data,
@@ -124,6 +154,11 @@ ws_send <- function(id, data, server = NULL) {
 #' @param code Integer close code. Default 1000 (normal closure).
 #' @inheritParams next_event
 #' @return \code{TRUE} if the close frame was written.
+#' @examples
+#' srv <- start_server(port = 0L, register = FALSE)
+#' # no connection has this id, so nothing is written
+#' ws_close(1L, 1000L, srv)
+#' stop_server(srv)
 #' @export
 ws_close <- function(id, code = 1000L, server = NULL) {
     .Call(civetweb_ws_close, .server_ptr(server), as.integer(id),
@@ -137,6 +172,14 @@ ws_close <- function(id, code = 1000L, server = NULL) {
 #'
 #' @param timeout_ms Polling timeout in milliseconds. Default is 100ms.
 #' @return Invisibly returns TRUE when the loop exits.
+#' @examples
+#' \dontrun{
+#' # runs until Ctrl-C
+#' handle("GET", "/", function(req) "hello")
+#' start_server(port = 8080L)
+#' run_server()
+#' stop_server()
+#' }
 #' @export
 run_server <- function(timeout_ms = 100L) {
     if (!.is_running()) {

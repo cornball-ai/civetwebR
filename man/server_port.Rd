@@ -15,3 +15,8 @@ Integer port.
 \description{
 Useful after \code{start_server(port = 0)}.
 }
+\examples{
+srv <- start_server(port = 0L, register = FALSE)
+server_port(srv)
+stop_server(srv)
+}

@@ -16,3 +16,7 @@ TRUE (invisibly) on success.
 \description{
 Removes a function for a given HTTP method and path.
 }
+\examples{
+handle("GET", "/temporary", function(req) "here for now")
+unhandle("GET", "/temporary")
+}

@@ -58,3 +58,22 @@ code before the \code{ws_close} event (RFC 6455 section 5.5.1).
 On Ctrl-C an \code{interrupt} condition is signalled.
 
 }
+\examples{
+srv <- start_server(port = 0L, register = FALSE)
+# one turn of an event loop: nothing arrives within 10 ms, so NULL
+ev <- next_event(10L, srv)
+is.null(ev)
+stop_server(srv)
+
+\dontrun{
+# the loop an application runs, until interrupted
+repeat {
+    ev <- next_event(100L, srv)
+    if (is.null(ev)) next
+    switch(ev$event,
+           request    = send_response(ev$id, "ok", srv),
+           ws_connect = send_response(ev$id, TRUE, srv),
+           ws_message = ws_send(ev$id, ev$body, srv))
+}
+}
+}

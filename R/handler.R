@@ -3,6 +3,13 @@
 #' @param prefix Character(1). Path prefix (e.g. "/api/v1").
 #' @param expr Code that registers handlers.
 #' @return Invisibly returns TRUE.
+#' @examples
+#' group("/api", {
+#'     handle("GET", "/users", function(req) "[]")
+#'     handle("GET", "/status", function(req) "ok")
+#' })
+#' # registered as /api/users and /api/status
+#' clear_handlers()
 #' @export
 group <- function(prefix, expr) {
     prefix <- .normalize_prefix(prefix)
@@ -30,6 +37,15 @@ group <- function(prefix, expr) {
 #' @param overwrite Logical. If TRUE (default), overwrite existing handler.
 #'
 #' @return TRUE (invisibly) on success.
+#' @examples
+#' # a string is a 200 text/plain response
+#' handle("GET", "/hello", function(req) "hello world")
+#' # a list sets the status, headers and body
+#' handle("POST", "/echo", function(req) {
+#'     list(status = 200L, headers = list("Content-Type" = "text/plain"),
+#'          body = req$body)
+#' })
+#' clear_handlers()
 #' @export
 handle <- function(method, path, fun, overwrite = TRUE) {
     if (!is.character(method) || length(method) != 1L || is.na(method)) {
@@ -67,6 +83,9 @@ handle <- function(method, path, fun, overwrite = TRUE) {
 #' @param method Character string. HTTP method (e.g. "GET").
 #' @param path Character string. Route path.
 #' @return TRUE (invisibly) on success.
+#' @examples
+#' handle("GET", "/temporary", function(req) "here for now")
+#' unhandle("GET", "/temporary")
 #' @export
 unhandle <- function(method, path) {
     if (!is.character(method) || length(method) != 1L || is.na(method)) {
@@ -199,6 +218,13 @@ unhandle <- function(method, path) {
 
 #' Clear all registered handlers
 #'
+#' Removes every HTTP handler and every WebSocket event handler.
+#'
+#' @return Invisibly returns TRUE.
+#' @examples
+#' handle("GET", "/a", function(req) "a")
+#' on_ws("message", function(req) ws_send(req$id, req$body))
+#' clear_handlers()
 #' @export
 clear_handlers <- function() {
     env <- .get_handlers_env()
@@ -224,6 +250,13 @@ clear_handlers <- function() {
 #' @param event Character string: "connect", "open", "message", or "close".
 #' @param fun Function taking a \code{cw_request} object.
 #' @return Invisibly returns TRUE.
+#' @examples
+#' # accept upgrades from one origin only, and echo every message
+#' on_ws("connect", function(req) {
+#'     identical(req_header(req, "Origin"), "http://localhost:8080")
+#' })
+#' on_ws("message", function(req) ws_send(req$id, req$body))
+#' clear_handlers()
 #' @export
 on_ws <- function(event, fun) {
     event <- match.arg(event, c("connect", "open", "message", "close"))

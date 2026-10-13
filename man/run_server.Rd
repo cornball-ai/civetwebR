@@ -15,3 +15,12 @@ Invisibly returns TRUE when the loop exits.
 This loop pulls requests from C, dispatches in R, and sends responses back.
 It runs until interrupted.
 }
+\examples{
+\dontrun{
+# runs until Ctrl-C
+handle("GET", "/", function(req) "hello")
+start_server(port = 8080L)
+run_server()
+stop_server()
+}
+}

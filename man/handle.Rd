@@ -21,3 +21,13 @@ TRUE (invisibly) on success.
 Registers a function for a given HTTP method and path. The path is
 normalized and combined with the current route prefix.
 }
+\examples{
+# a string is a 200 text/plain response
+handle("GET", "/hello", function(req) "hello world")
+# a list sets the status, headers and body
+handle("POST", "/echo", function(req) {
+    list(status = 200L, headers = list("Content-Type" = "text/plain"),
+         body = req$body)
+})
+clear_handlers()
+}

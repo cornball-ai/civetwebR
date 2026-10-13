@@ -23,3 +23,11 @@ NULL, invisibly.
 \description{
 Answer a request or a WebSocket connect
 }
+\examples{
+srv <- start_server(port = 0L, register = FALSE)
+ev <- next_event(10L, srv)
+if (!is.null(ev) && ev$event == "request") {
+    send_response(ev$id, list(status = 200L, body = "ok"), srv)
+}
+stop_server(srv)
+}

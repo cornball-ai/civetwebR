@@ -25,6 +25,22 @@ static_files(
 
 \item{template}{Character(1) or NULL. Optional template path override.}
 }
+\value{
+A handler: a function of a request that returns a response
+  list (\code{status}, \code{headers}, raw \code{body}), as
+  \code{serve(static = )} installs it.
+}
 \description{
 Static file handler (serves files from a directory)
+}
+\examples{
+www <- tempfile("www")
+dir.create(www)
+writeLines("<h1>hi</h1>", file.path(www, "index.html"))
+h <- static_files(www, prefix = "/")
+res <- h(list(path = "/index.html"))
+res$status
+rawToChar(res$body)
+h(list(path = "/missing.html"))$status
+unlink(www, recursive = TRUE)
 }

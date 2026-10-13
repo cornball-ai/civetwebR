@@ -16,6 +16,12 @@
 #' @param tls_cert NULL, or the path of a PEM file holding the server's
 #'   certificate and private key; see \code{\link{start_server}}.
 #' @return Invisibly returns TRUE when the loop exits.
+#' @examples
+#' \dontrun{
+#' # runs until Ctrl-C
+#' handle("GET", "/", function(req) "hello")
+#' serve(port = 8080L)
+#' }
 #' @export
 serve <- function(port = 8080L, host = "127.0.0.1", quiet = FALSE,
                   log = NULL, static = NULL, timeout_ms = 100L,

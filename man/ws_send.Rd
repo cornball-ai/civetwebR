@@ -20,3 +20,9 @@ the default server.}
 \description{
 Send a WebSocket message
 }
+\examples{
+srv <- start_server(port = 0L, register = FALSE)
+# no connection has this id, so nothing is written
+ws_send(1L, "hello", srv)
+stop_server(srv)
+}

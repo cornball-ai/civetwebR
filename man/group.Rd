@@ -16,3 +16,11 @@ Invisibly returns TRUE.
 \description{
 Register handlers under a common path prefix
 }
+\examples{
+group("/api", {
+    handle("GET", "/users", function(req) "[]")
+    handle("GET", "/status", function(req) "ok")
+})
+# registered as /api/users and /api/status
+clear_handlers()
+}

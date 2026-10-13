@@ -52,3 +52,10 @@ Invisibly returns TRUE when the loop exits.
 \description{
 Start and run the HTTP server
 }
+\examples{
+\dontrun{
+# runs until Ctrl-C
+handle("GET", "/", function(req) "hello")
+serve(port = 8080L)
+}
+}

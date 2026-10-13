@@ -22,3 +22,11 @@ refuse with that status. It sees the upgrade request's
 \code{remote_addr}. Without a connect handler every upgrade is
 accepted.
 }
+\examples{
+# accept upgrades from one origin only, and echo every message
+on_ws("connect", function(req) {
+    identical(req_header(req, "Origin"), "http://localhost:8080")
+})
+on_ws("message", function(req) ws_send(req$id, req$body))
+clear_handlers()
+}
