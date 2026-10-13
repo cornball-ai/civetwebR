@@ -1,4 +1,5 @@
-civetwebR itself is MIT, see the LICENSE file. It bundles two libraries:
+civetwebR itself is MIT, see the LICENSE file. It bundles two libraries,
+and CivetWeb carries two small third-party pieces of its own.
 
 CivetWeb (src/civetweb.c, src/civetweb.h, src/civetweb/*.inl except the
 external_*.inl hooks written for this package)
@@ -7,6 +8,35 @@ external_*.inl hooks written for this package)
   MIT license. https://github.com/civetweb/civetweb
   The commit vendored is recorded in src/civetweb/COMMIT, and this
   package's patches to it are in tools/patches/.
+
+  src/civetweb/md5.inl: an independent MD5 implementation (RFC 1321)
+  by L. Peter Deutsch, amalgamated into one file for CivetWeb by No
+  Face Press, LLC. Its notice, reproduced from the file:
+
+    Copyright (C) 1999, 2000, 2002 Aladdin Enterprises.  All rights reserved.
+
+    This software is provided 'as-is', without any express or implied
+    warranty.  In no event will the authors be held liable for any damages
+    arising from the use of this software.
+
+    Permission is granted to anyone to use this software for any purpose,
+    including commercial applications, and to alter it and redistribute it
+    freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+       claim that you wrote the original software. If you use this software
+       in a product, an acknowledgment in the product documentation would be
+       appreciated but is not required.
+    2. Altered source versions must be plainly marked as such, and must not be
+       misrepresented as being the original software.
+    3. This notice may not be removed or altered from any source distribution.
+
+    L. Peter Deutsch
+    ghost@aladdin.com
+
+  src/civetweb/sha1.inl: SHA-1 in C by Steve Reid, with modifications
+  by James H. Brown, Steve Reid, Saul Kravitz and Ralph Giles, each
+  marked "100% Public Domain" in the file. No copyright is claimed.
 
 Mbed TLS (src/mbedtls/)
   Copyright The Mbed TLS Contributors

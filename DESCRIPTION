@@ -1,24 +1,47 @@
 Package: civetwebR
 Type: Package
-Title: Embedded HTTP Server for R with Static File Serving and Request Handling
+Title: Embedded HTTP and WebSocket Server Through 'CivetWeb'
 Version: 0.0.1.6
 Authors@R: c(
-    person("Vedo", "Alagic", email = "vedo.alagic@outlook.com", role = c("aut", "cre")),
-    person("Troy", "Hernandez", email = "troy@cornball.ai", role = "aut",
+    person("Troy", "Hernandez", email = "troy@cornball.ai",
+           role = c("aut", "cre"),
            comment = c(ORCID = "0009-0005-4248-604X")),
+    person("Vedo", "Alagic", email = "vedo.alagic@outlook.com",
+           role = c("aut", "cph"),
+           comment = "wrote the package; github.com/vedoa/civetwebR"),
     person("cornball.ai", role = "cph"),
     person("The CivetWeb developers", role = "cph",
-           comment = "CivetWeb, bundled in src/civetweb.c"),
+           comment = "CivetWeb, bundled in src/civetweb.c and src/civetweb/"),
     person("Sergey", "Lyubka", role = "cph",
            comment = "Mongoose, from which CivetWeb descends"),
+    person("Aladdin Enterprises", role = "cph",
+           comment = "the MD5 implementation in src/civetweb/md5.inl"),
+    person("L. Peter", "Deutsch", role = "ctb",
+           comment = "author of src/civetweb/md5.inl"),
+    person("No Face Press, LLC", role = "ctb",
+           comment = "amalgamated md5.inl for CivetWeb"),
+    person("Steve", "Reid", role = "ctb",
+           comment = "author of src/civetweb/sha1.inl (public domain)"),
+    person("James H.", "Brown", role = "ctb",
+           comment = "src/civetweb/sha1.inl"),
+    person("Saul", "Kravitz", role = "ctb",
+           comment = "src/civetweb/sha1.inl"),
+    person("Ralph", "Giles", role = "ctb",
+           comment = "src/civetweb/sha1.inl"),
     person("The Mbed TLS Contributors", role = "cph",
            comment = "Mbed TLS, bundled in src/mbedtls/"))
 Copyright: See inst/COPYRIGHTS for the bundled CivetWeb and Mbed TLS.
 SystemRequirements: GNU make
-Description: Provides an R interface to the CivetWeb embedded C web server. 
-    Enables starting HTTP servers, serving static files, and handling HTTP 
-    requests directly from R.
+Description: An embedded HTTP and WebSocket server. The bundled 'CivetWeb'
+    <https://github.com/civetweb/civetweb> C library does the socket work
+    on its own threads, and R handles one request or WebSocket event at a
+    time on its main thread, so handlers need no locking. Static files are
+    served from disk, TLS (Transport Layer Security) is terminated by the
+    bundled 'Mbed TLS' <https://github.com/Mbed-TLS/mbedtls>, and the
+    event loop is exposed so an application can drive it from its own.
 License: MIT + file LICENSE
+URL: https://github.com/cornball-ai/civetwebR
+BugReports: https://github.com/cornball-ai/civetwebR/issues
 Encoding: UTF-8
 NeedsCompilation: yes
 Suggests:
