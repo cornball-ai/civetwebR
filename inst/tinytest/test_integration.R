@@ -19,9 +19,8 @@ local({
     writeLines("INDEX", file.path(public, "index.html"))
 
     port <- sample(10000:20000, 1)
-    p <- serve_bg(port, static = list(
-        list(dir = public, prefix = "/"),
-        list(dir = assets, prefix = "/assets")))
+    p <- serve_bg(port, static = list(list(dir = public, prefix = "/"),
+                                      list(dir = assets, prefix = "/assets")))
     on.exit(if (p$is_alive()) p$kill(), add = TRUE)
     wait_for_server(port, p)
 
@@ -58,8 +57,8 @@ local({
 
     port <- sample(10000:20000, 1)
     p <- serve_bg(port,
-        setup = function() handle("GET", "/api/hello", function(req) "ROUTE"),
-        static = list(list(dir = public, prefix = "/")))
+                  setup = function() handle("GET", "/api/hello", function(req) "ROUTE"),
+                  static = list(list(dir = public, prefix = "/")))
     on.exit(if (p$is_alive()) p$kill(), add = TRUE)
     wait_for_server(port, p)
 
@@ -72,16 +71,15 @@ local({
     port <- sample(10000:20000, 1)
     p <- serve_bg(port, setup = function() {
         handle("GET", "/custom", function(req) {
-            list(status = 201L,
-                headers = list("X-Test-Header" = "civetwebR"),
-                body = "status-201")
+            list(status = 201L, headers = list("X-Test-Header" = "civetwebR"),
+                 body = "status-201")
         })
     })
     on.exit(if (p$is_alive()) p$kill(), add = TRUE)
     wait_for_server(port, p)
 
     lines <- http_raw(port,
-        "GET /custom HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n")
+                      "GET /custom HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n")
     # 201 Created (HTTP/1.0 if CivetWeb did not upgrade the connection)
     expect_true(any(grepl("HTTP/1\\.[01] 201", lines)))
     # the custom header propagates
@@ -97,14 +95,14 @@ local({
     p <- serve_bg(port, setup = function() {
         handle("GET", "/teapot", function(req) {
             list(status = 418L, status_text = "I am a coffee pot",
-                body = "short and stout")
+                 body = "short and stout")
         })
     })
     on.exit(if (p$is_alive()) p$kill(), add = TRUE)
     wait_for_server(port, p)
 
     lines <- http_raw(port,
-        "GET /teapot HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n")
+                      "GET /teapot HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n")
     expect_match(lines[1], "418 I am a coffee pot", fixed = TRUE)
 })
 
@@ -116,8 +114,8 @@ local({
         handle("POST", "/check-size", function(req) {
             # the flag and the length actually received
             list(status = 200L,
-                headers = list("X-Body-Large" = as.character(req$body_too_large)),
-                body = as.character(length(req$body)))
+                 headers = list("X-Body-Large" = as.character(req$body_too_large)),
+                 body = as.character(length(req$body)))
         })
     }, max_body_size = 50)
     on.exit(if (p$is_alive()) p$kill(), add = TRUE)
@@ -125,9 +123,9 @@ local({
 
     post <- function(payload) {
         http_raw(port, sprintf(paste0(
-            "POST /check-size HTTP/1.1\r\nHost: 127.0.0.1\r\n",
-            "Content-Length: %d\r\nConnection: close\r\n\r\n%s"),
-            nchar(payload), payload))
+                                      "POST /check-size HTTP/1.1\r\nHost: 127.0.0.1\r\n",
+                                      "Content-Length: %d\r\nConnection: close\r\n\r\n%s"),
+                               nchar(payload), payload))
     }
 
     # within the limit: 5 bytes

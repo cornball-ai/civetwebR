@@ -3,14 +3,9 @@
 
 # --- cw_request prints its fields ---
 
-req <- list(
-    id = 1,
-    method = "GET",
-    path = "/test",
-    query = "a=1",
-    headers = c("Content-Type" = "text/plain"),
-    body = charToRaw("hello")
-)
+req <- list(id = 1, method = "GET", path = "/test", query = "a=1",
+            headers = c("Content-Type" = "text/plain"),
+            body = charToRaw("hello"))
 class(req) <- "cw_request"
 
 out <- capture.output(print(req))
@@ -23,11 +18,7 @@ expect_match(out[6], "Body:    5 bytes", fixed = TRUE)
 
 # --- cw_response prints its fields ---
 
-res <- list(
-    status = 200L,
-    headers = list("X-Test" = "val"),
-    body = "ok"
-)
+res <- list(status = 200L, headers = list("X-Test" = "val"), body = "ok")
 class(res) <- "cw_response"
 
 out <- capture.output(print(res))
@@ -39,7 +30,7 @@ expect_match(out[4], "Body:    2 bytes/chars", fixed = TRUE)
 # --- req_header() is case-insensitive ---
 
 req <- list(
-    headers = c("Content-Type" = "application/json", "X-Custom" = "foo")
+            headers = c("Content-Type" = "application/json", "X-Custom" = "foo")
 )
 class(req) <- "cw_request"
 

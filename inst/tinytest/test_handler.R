@@ -55,8 +55,8 @@ expect_equal(res$body, "ok")
 clear_handlers()
 handle("GET", "/bin", function(req) {
     list(status = 200L,
-        headers = list("Content-Type" = "application/octet-stream"),
-        body = charToRaw("abc"))
+         headers = list("Content-Type" = "application/octet-stream"),
+         body = charToRaw("abc"))
 })
 res <- .dispatch_request("GET", "/bin")
 expect_equal(res$status, 200L)
@@ -100,7 +100,7 @@ expect_equal(res$body, "abc")
 clear_handlers()
 handle("POST", "/all", function(req) {
     paste(req$query_params$a, req$headers[["X-T"]], rawToChar(req$body),
-        sep = "|")
+          sep = "|")
 })
 req <- list(query = "a=1", headers = c("X-T" = "t"), body = charToRaw("z"))
 res <- .dispatch_request("POST", "/all", req = req)
@@ -121,7 +121,7 @@ expect_identical(.get_handler("GET", "/test"), h2)
 
 # overwrite = FALSE errors
 expect_error(handle("GET", "/test", h1, overwrite = FALSE),
-    pattern = "handler exists")
+             pattern = "handler exists")
 
 # the method is case-insensitive
 handle("post", "/test", h1)

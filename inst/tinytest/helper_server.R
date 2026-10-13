@@ -13,7 +13,7 @@ wait_for_server <- function(port, p = NULL, timeout = 5) {
         # a refused connection is a warning and an error; neither is news
         ok <- suppressWarnings(tryCatch({
             con <- socketConnection(host = "127.0.0.1", port = port,
-                open = "r+", blocking = TRUE)
+                                    open = "r+", blocking = TRUE)
             close(con)
             TRUE
         }, error = function(e) FALSE))
@@ -38,8 +38,8 @@ serve_bg <- function(port, setup = function() NULL, ...) {
         .libPaths(lib_paths)
         library(civetwebR)
         setup()
-        do.call(serve, c(list(port = port, host = "127.0.0.1", quiet = TRUE),
-            args))
+        do.call(serve,
+                c(list(port = port, host = "127.0.0.1", quiet = TRUE), args))
     }, args = list(.libPaths(), port, setup, list(...)))
 }
 
@@ -54,7 +54,7 @@ http_get <- function(port, path) {
 # whole response as lines. The request should carry Connection: close.
 http_raw <- function(port, request) {
     con <- socketConnection(host = "127.0.0.1", port = port, open = "r+",
-        blocking = TRUE)
+                            blocking = TRUE)
     on.exit(close(con), add = TRUE)
     writeChar(request, con, eos = NULL)
     flush(con)

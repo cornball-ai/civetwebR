@@ -31,63 +31,46 @@
 #'   \code{TRUE}.
 #' @return A server handle (class \code{cw_server}), invisibly.
 #' @export
-start_server <- function(
-  port = 8080L,
-  host = "127.0.0.1",
-  num_threads = 50L,
-  max_body_size = 8 * 1024 * 1024,
-  request_timeout_ms = 30000L,
-  ws_path = "/ws",
-  static_dirs = NULL,
-  keep_alive = FALSE,
-  tls_cert = NULL,
-  register = TRUE
-) {
-  if (isTRUE(register)) {
-    .validate_is_running()
-  }
-  port <- .validate_port(port)
-  host <- .validate_host(host)
-  num_threads <- .validate_num_threads(num_threads)
-  max_body_size <- .validate_max_body_size(max_body_size)
-  request_timeout_ms <- .validate_request_timeout_ms(request_timeout_ms)
-  ws_path <- .validate_ws_path(ws_path)
-  static_dirs <- .validate_static_dirs(static_dirs)
-  keep_alive <- .validate_keep_alive(keep_alive)
-  tls_cert <- .validate_tls_cert(tls_cert)
+start_server <- function(port = 8080L, host = "127.0.0.1", num_threads = 50L,
+                         max_body_size = 8 * 1024 * 1024,
+                         request_timeout_ms = 30000L, ws_path = "/ws",
+                         static_dirs = NULL, keep_alive = FALSE,
+                         tls_cert = NULL, register = TRUE) {
+    if (isTRUE(register)) {
+        .validate_is_running()
+    }
+    port <- .validate_port(port)
+    host <- .validate_host(host)
+    num_threads <- .validate_num_threads(num_threads)
+    max_body_size <- .validate_max_body_size(max_body_size)
+    request_timeout_ms <- .validate_request_timeout_ms(request_timeout_ms)
+    ws_path <- .validate_ws_path(ws_path)
+    static_dirs <- .validate_static_dirs(static_dirs)
+    keep_alive <- .validate_keep_alive(keep_alive)
+    tls_cert <- .validate_tls_cert(tls_cert)
 
-  ptr <- .Call(
-    civetweb_start_server,
-    port,
-    host,
-    num_threads,
-    as.numeric(max_body_size),
-    request_timeout_ms,
-    ws_path,
-    names(static_dirs),
-    unname(static_dirs),
-    keep_alive,
-    tls_cert,
-    PACKAGE = "civetwebR"
-  )
+    ptr <- .Call(civetweb_start_server, port, host, num_threads,
+                 as.numeric(max_body_size), request_timeout_ms, ws_path,
+                 names(static_dirs), unname(static_dirs), keep_alive,
+                 tls_cert, PACKAGE = "civetwebR")
 
-  if (is.null(ptr)) {
-    stop("failed to start server", call. = FALSE)
-  }
+    if (is.null(ptr)) {
+        stop("failed to start server", call. = FALSE)
+    }
 
-  handle <- structure(
-    list(ptr = ptr, host = host, port = port, ws_path = ws_path,
-         tls = !is.null(tls_cert)),
-    class = "cw_server"
-  )
+    handle <- structure(
+                        list(ptr = ptr, host = host, port = port, ws_path = ws_path,
+                             tls = !is.null(tls_cert)),
+                        class = "cw_server"
+    )
 
-  if (isTRUE(register)) {
-    .state$server_xptr <- ptr
-    .state$server <- handle
-    .set_loop_running(FALSE)
-  }
+    if (isTRUE(register)) {
+        .state$server_xptr <- ptr
+        .state$server <- handle
+        .set_loop_running(FALSE)
+    }
 
-  invisible(handle)
+    invisible(handle)
 }
 
 #' Stop a CivetWeb server
@@ -101,24 +84,24 @@ start_server <- function(
 #' @return Invisibly returns TRUE.
 #' @export
 stop_server <- function(server = NULL) {
-  if (is.null(server)) {
-    .validate_is_not_running()
-    ptr <- .state$server_xptr
-    .Call(civetweb_stop_server, ptr, PACKAGE = "civetwebR")
-    .state$server_xptr <- NULL
-    .state$server <- NULL
-    .set_loop_running(FALSE)
-    return(invisible(TRUE))
-  }
+    if (is.null(server)) {
+        .validate_is_not_running()
+        ptr <- .state$server_xptr
+        .Call(civetweb_stop_server, ptr, PACKAGE = "civetwebR")
+        .state$server_xptr <- NULL
+        .state$server <- NULL
+        .set_loop_running(FALSE)
+        return(invisible(TRUE))
+    }
 
-  ptr <- .server_ptr(server)
-  .Call(civetweb_stop_server, ptr, PACKAGE = "civetwebR")
-  if (identical(ptr, .state$server_xptr)) {
-    .state$server_xptr <- NULL
-    .state$server <- NULL
-    .set_loop_running(FALSE)
-  }
-  invisible(TRUE)
+    ptr <- .server_ptr(server)
+    .Call(civetweb_stop_server, ptr, PACKAGE = "civetwebR")
+    if (identical(ptr, .state$server_xptr)) {
+        .state$server_xptr <- NULL
+        .state$server <- NULL
+        .set_loop_running(FALSE)
+    }
+    invisible(TRUE)
 }
 
 #' The port a server is listening on
@@ -129,7 +112,7 @@ stop_server <- function(server = NULL) {
 #' @return Integer port.
 #' @export
 server_port <- function(server = NULL) {
-  .Call(civetweb_server_port, .server_ptr(server), PACKAGE = "civetwebR")
+    .Call(civetweb_server_port, .server_ptr(server), PACKAGE = "civetwebR")
 }
 
 #' Was TLS compiled in?
@@ -140,31 +123,31 @@ server_port <- function(server = NULL) {
 #' @return Logical.
 #' @export
 has_tls <- function() {
-  .Call(civetweb_has_tls, PACKAGE = "civetwebR")
+    .Call(civetweb_has_tls, PACKAGE = "civetwebR")
 }
 
 #' @exportS3Method print cw_server
 print.cw_server <- function(x, ...) {
-  running <- .Call(civetweb_server_running, x$ptr, PACKAGE = "civetwebR")
-  scheme <- if (isTRUE(x$tls)) "https" else "http"
-  cat("<cw_server> ", scheme, "://", x$host, ":", x$port, "  ",
-      if (running) "running" else "stopped", "\n", sep = "")
-  invisible(x)
+    running <- .Call(civetweb_server_running, x$ptr, PACKAGE = "civetwebR")
+    scheme <- if (isTRUE(x$tls)) "https" else "http"
+    cat("<cw_server> ", scheme, "://", x$host, ":", x$port, "  ",
+        if (running) "running" else "stopped", "\n", sep = "")
+    invisible(x)
 }
 
 # Resolve a server argument to its external pointer.
 .server_ptr <- function(server) {
-  if (is.null(server)) {
-    if (!.is_running()) {
-      stop("Server is not running", call. = FALSE)
+    if (is.null(server)) {
+        if (!.is_running()) {
+            stop("Server is not running", call. = FALSE)
+        }
+        return(.state$server_xptr)
     }
-    return(.state$server_xptr)
-  }
-  if (inherits(server, "cw_server")) {
-    return(server$ptr)
-  }
-  if (typeof(server) == "externalptr") {
-    return(server)
-  }
-  stop("server must be a cw_server handle or NULL", call. = FALSE)
+    if (inherits(server, "cw_server")) {
+        return(server$ptr)
+    }
+    if (typeof(server) == "externalptr") {
+        return(server)
+    }
+    stop("server must be a cw_server handle or NULL", call. = FALSE)
 }

@@ -17,19 +17,19 @@ local({
     wait_for_server(port, p)
 
     con <- socketConnection(host = "127.0.0.1", port = port, open = "r+b",
-        blocking = TRUE)
+                            blocking = TRUE)
     on.exit(close(con), add = TRUE)
 
     # 1. the handshake
     writeLines(c(
-        "GET /ws HTTP/1.1",
-        "Host: 127.0.0.1",
-        "Upgrade: websocket",
-        "Connection: Upgrade",
-        "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==",
-        "Sec-WebSocket-Version: 13",
-        ""
-    ), con, sep = "\r\n")
+                 "GET /ws HTTP/1.1",
+                 "Host: 127.0.0.1",
+                 "Upgrade: websocket",
+                 "Connection: Upgrade",
+                 "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==",
+                 "Sec-WebSocket-Version: 13",
+                 ""
+        ), con, sep = "\r\n")
     flush(con)
 
     # 2. 101 Switching Protocols, then the rest of the head

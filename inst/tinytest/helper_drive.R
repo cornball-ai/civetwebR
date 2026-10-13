@@ -9,9 +9,9 @@
 curl_bg <- function(args) {
     callr::r_bg(function(args) {
         out <- suppressWarnings(system2("curl", args, stdout = TRUE,
-            stderr = TRUE))
+                                        stderr = TRUE))
         list(status = attr(out, "status"), out = paste(out, collapse = "\n"),
-            lines = as.character(out))
+             lines = as.character(out))
     }, args = list(args))
 }
 

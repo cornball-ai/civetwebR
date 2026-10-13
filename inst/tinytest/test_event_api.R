@@ -29,8 +29,8 @@ local({
     on.exit(if (p$is_alive()) p$kill(), add = TRUE)
 
     seen <- drive_until(srv,
-        function(ev) ev$event == "request",
-        function(ev) list(status = 200L,
+                        function(ev) ev$event == "request",
+                        function(ev) list(status = 200L,
             body = paste0("got ", ev$path, "?", ev$query)))
     ev <- seen[[length(seen)]]
     expect_inherits(ev, "cw_request")
@@ -77,7 +77,7 @@ local({
     port <- server_port(srv)
     p <- callr::r_bg(function(port) {
         con <- socketConnection("127.0.0.1", port, open = "r+b",
-            blocking = TRUE)
+                                blocking = TRUE)
         on.exit(close(con))
         writeLines(c("GET /slow HTTP/1.1", "Host: x", ""), con, sep = "\r\n")
         flush(con)
@@ -98,14 +98,10 @@ local({
 
 # A minimal client-side WebSocket handshake over a raw socket.
 ws_handshake <- function(con, origin = NULL, path = "/ws") {
-    lines <- c(
-        sprintf("GET %s HTTP/1.1", path),
-        "Host: 127.0.0.1",
-        "Upgrade: websocket",
-        "Connection: Upgrade",
-        "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==",
-        "Sec-WebSocket-Version: 13"
-    )
+    lines <- c(sprintf("GET %s HTTP/1.1", path), "Host: 127.0.0.1",
+               "Upgrade: websocket", "Connection: Upgrade",
+               "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==",
+               "Sec-WebSocket-Version: 13")
     if (!is.null(origin)) lines <- c(lines, paste0("Origin: ", origin))
     writeLines(c(lines, ""), con, sep = "\r\n")
     flush(con)
@@ -120,7 +116,7 @@ ws_handshake <- function(con, origin = NULL, path = "/ws") {
 ws_client <- function(port, origin, then = "exit") {
     callr::r_bg(function(port, origin, then, ws_handshake) {
         con <- socketConnection("127.0.0.1", port, open = "r+b",
-            blocking = TRUE)
+                                blocking = TRUE)
         on.exit(close(con))
         status <- ws_handshake(con, origin)
         if (!grepl("101", status)) return(list(status = status))
@@ -152,7 +148,7 @@ ws_client <- function(port, origin, then = "exit") {
             }
         }
         list(status = status, echo = rawToChar(body),
-            closed_by_server = closed_by_server)
+             closed_by_server = closed_by_server)
     }, args = list(port, origin, then, ws_handshake))
 }
 
@@ -167,11 +163,11 @@ local({
     on.exit(if (p$is_alive()) p$kill(), add = TRUE)
 
     seen <- drive_until(srv,
-        function(ev) ev$event == "ws_connect",
-        function(ev) {
-            origin <- ev$headers[["Origin"]]
-            if (identical(origin, "http://evil.example")) FALSE else TRUE
-        })
+                        function(ev) ev$event == "ws_connect",
+                        function(ev) {
+        origin <- ev$headers[["Origin"]]
+        if (identical(origin, "http://evil.example")) FALSE else TRUE
+    })
     ev <- seen[[length(seen)]]
     expect_equal(ev$event, "ws_connect")
     expect_equal(ev$headers[["Origin"]], "http://evil.example")
@@ -195,18 +191,18 @@ local({
 
     ids <- integer(0)
     seen <- drive_until(srv,
-        function(ev) {
-            ids <<- c(ids, ev$id)
-            if (ev$event == "ws_message") {
-                expect_false(ev$binary)
-                expect_true(ev$fin)
-                expect_true(ws_send(ev$id,
-                    paste0("echo:", rawToChar(ev$body)), srv))
-                expect_true(ws_close(ev$id, 1000L, srv))
-            }
-            ev$event == "ws_close"
-        },
-        function(ev) TRUE)
+                        function(ev) {
+        ids <<- c(ids, ev$id)
+        if (ev$event == "ws_message") {
+            expect_false(ev$binary)
+            expect_true(ev$fin)
+            expect_true(ws_send(ev$id, paste0("echo:", rawToChar(ev$body)),
+                                srv))
+            expect_true(ws_close(ev$id, 1000L, srv))
+        }
+        ev$event == "ws_close"
+    },
+                        function(ev) TRUE)
     events <- vapply(seen, function(e) e$event, "")
     expect_equal(events, c("ws_connect", "ws_open", "ws_message", "ws_close"))
     expect_equal(length(unique(ids)), 1L)
@@ -226,25 +222,25 @@ local({
 ws_client_rfc <- function(port) {
     callr::r_bg(function(port, ws_handshake) {
         con <- socketConnection("127.0.0.1", port, open = "r+b",
-            blocking = TRUE)
+                                blocking = TRUE)
         on.exit(close(con))
         key <- as.raw(c(1, 2, 3, 4))
         frame <- function(opcode, payload, fin = TRUE) {
             mask <- rep_len(as.integer(key), length(payload))
             masked <- as.raw(bitwXor(as.integer(payload), mask))
             c(as.raw(c((if (fin) 0x80 else 0x00) + opcode,
-                0x80 + length(payload))), key, masked)
+                        0x80 + length(payload))), key, masked)
         }
         read_frame <- function() {
             hdr <- readBin(con, "raw", 2L)
             n <- as.integer(hdr[2]) %% 128L
             list(opcode = as.integer(hdr[1]) %% 16L,
-                payload = if (n > 0L) readBin(con, "raw", n) else raw(0))
+                 payload = if (n > 0L) readBin(con, "raw", n) else raw(0))
         }
         out <- list(status = ws_handshake(con))
         # "ab" as a non-final text frame, "cd" as the final continuation
         writeBin(c(frame(0x1, charToRaw("ab"), fin = FALSE),
-            frame(0x0, charToRaw("cd"))), con)
+                   frame(0x0, charToRaw("cd"))), con)
         flush(con)
         out$echo <- rawToChar(read_frame()$payload)
         writeBin(frame(0x9, charToRaw("marco")), con)
@@ -276,19 +272,19 @@ local({
 
     parts <- raw(0)
     seen <- drive_until(srv,
-        function(ev) {
-            if (ev$event == "ws_message") {
-                expect_false(ev$binary)
-                parts <<- c(parts, ev$body)
-                if (ev$fin) {
-                    ws_send(ev$id, rawToChar(parts), srv)
-                    parts <<- raw(0)
-                }
+                        function(ev) {
+        if (ev$event == "ws_message") {
+            expect_false(ev$binary)
+            parts <<- c(parts, ev$body)
+            if (ev$fin) {
+                ws_send(ev$id, rawToChar(parts), srv)
+                parts <<- raw(0)
             }
-            ev$event == "ws_close"
-        },
-        function(ev) TRUE,
-        timeout = 10)
+        }
+        ev$event == "ws_close"
+    },
+                        function(ev) TRUE,
+                        timeout = 10)
     msgs <- Filter(function(e) e$event == "ws_message", seen)
     expect_equal(vapply(msgs, function(e) e$opcode, 1L), c(1L, 0L))
     expect_equal(vapply(msgs, function(e) e$fin, NA), c(FALSE, TRUE))
@@ -315,11 +311,11 @@ local({
 
     p <- callr::r_bg(function(port) {
         con <- socketConnection("127.0.0.1", port, open = "r+b",
-            blocking = TRUE)
+                                blocking = TRUE)
         on.exit(close(con))
         writeLines(c("POST /x HTTP/1.1", "Host: x",
-            "Transfer-Encoding: chunked", "Content-Length: 5",
-            "", "0", ""), con, sep = "\r\n")
+                     "Transfer-Encoding: chunked", "Content-Length: 5",
+                     "", "0", ""), con, sep = "\r\n")
         flush(con)
         readLines(con, n = 1L, warn = FALSE)
     }, args = list(port))
@@ -373,14 +369,14 @@ local({
     writeLines("0123456789", file.path(www, "digits.txt"))
 
     srv <- start_server(port = 0L, register = FALSE,
-        static_dirs = c("/assets/" = www))
+                        static_dirs = c("/assets/" = www))
     on.exit(stop_server(srv), add = TRUE)
     port <- server_port(srv)
 
     # -i: status line and headers first, then the 3-byte body as the
     # last line.
     p <- curl_bg(c("-s", "-i", "--max-time", "10", "-r", "2-4",
-        sprintf("http://127.0.0.1:%d/assets/digits.txt", port)))
+                   sprintf("http://127.0.0.1:%d/assets/digits.txt", port)))
     on.exit(if (p$is_alive()) p$kill(), add = TRUE)
 
     # Drive the loop: no "request" event may arrive for the static path.

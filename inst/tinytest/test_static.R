@@ -6,7 +6,7 @@
 handler_for <- function(cfg) {
     static <- .validate_static(cfg)
     static_files(dir = static[[1]]$dir, prefix = static[[1]]$prefix,
-        index = static[[1]]$index)
+                 index = static[[1]]$index)
 }
 
 # --- a single mount serves a file, its index, and 404 ---
@@ -42,9 +42,8 @@ local({
     writeLines("root", file.path(public, "file.txt"))
     writeLines("asset", file.path(assets, "file.txt"))
 
-    static <- .validate_static(list(
-        list(dir = public, prefix = "/"),
-        list(dir = assets, prefix = "/assets")))
+    static <- .validate_static(list(list(dir = public, prefix = "/"),
+                                    list(dir = assets, prefix = "/assets")))
     handlers <- lapply(static, function(s) {
         static_files(dir = s$dir, prefix = s$prefix, index = s$index)
     })
@@ -84,7 +83,7 @@ local({
     writeLines("alt index", file.path(public, "default.html"))
 
     h <- handler_for(list(dir = public, prefix = "/",
-        index = c("default.html", "index.html")))
+                          index = c("default.html", "index.html")))
     res <- h(list(path = "/"))
     expect_equal(res$status, 200L)
     expect_match(rawToChar(res$body), "alt index")
@@ -108,9 +107,8 @@ local({
     writeLines("INDEX", file.path(public, "index.html"))
 
     port <- sample(10000:20000, 1)
-    p <- serve_bg(port, static = list(
-        list(dir = public, prefix = "/"),
-        list(dir = assets, prefix = "/assets")))
+    p <- serve_bg(port, static = list(list(dir = public, prefix = "/"),
+                                      list(dir = assets, prefix = "/assets")))
     on.exit(if (p$is_alive()) p$kill(), add = TRUE)
     wait_for_server(port, p)
 

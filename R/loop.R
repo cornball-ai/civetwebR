@@ -1,48 +1,32 @@
 # Internal native wrappers (native symbols; required with R_forceSymbols(TRUE))
 
 # Event type codes from server.c
-.EVENT_NAMES <- c(
-  "0" = "request",
-  "1" = "ws_connect",
-  "2" = "ws_open",
-  "3" = "ws_message",
-  "4" = "ws_close"
-)
+.EVENT_NAMES <- c("0" = "request", "1" = "ws_connect", "2" = "ws_open",
+                  "3" = "ws_message", "4" = "ws_close")
 
 .next_request <- function(timeout_ms = 100L, server = NULL) {
-  req <- .Call(
-    civetweb_next_request_timeout,
-    .server_ptr(server),
-    as.integer(timeout_ms),
-    PACKAGE = "civetwebR"
-  )
+    req <- .Call(civetweb_next_request_timeout, .server_ptr(server),
+                 as.integer(timeout_ms), PACKAGE = "civetwebR")
 
-  if (is.list(req) && !isTRUE(req$interrupted)) {
-    req$event <- unname(.EVENT_NAMES[as.character(req$type)])
-    class(req) <- "cw_request"
-  }
-  req
+    if (is.list(req) && !isTRUE(req$interrupted)) {
+        req$event <- unname(.EVENT_NAMES[as.character(req$type)])
+        class(req) <- "cw_request"
+    }
+    req
 }
 
 .send_response <- function(id, res, server = NULL) {
-  .Call(
-    civetweb_send_response,
-    .server_ptr(server),
-    as.integer(id),
-    res,
-    PACKAGE = "civetwebR"
-  )
+    .Call(civetweb_send_response, .server_ptr(server), as.integer(id), res,
+          PACKAGE = "civetwebR")
 }
 
 # Ctrl-C arrives from C as a sentinel, because the check that notices it
 # must not longjmp out of C. Raise it here as a real interrupt condition:
 # tryCatch(interrupt = ) catches it, and unhandled it ends the call.
 .raise_interrupt <- function() {
-  cond <- structure(
-    class = c("interrupt", "condition"),
-    list(message = "interrupted", call = NULL)
-  )
-  stop(cond)
+    cond <- structure(class = c("interrupt", "condition"),
+                      list(message = "interrupted", call = NULL))
+    stop(cond)
 }
 
 #' Wait for the next event
@@ -94,12 +78,12 @@
 #' @return A \code{cw_request}, or \code{NULL} on timeout.
 #' @export
 next_event <- function(timeout_ms = 100L, server = NULL) {
-  timeout_ms <- .validate_timeout_ms(timeout_ms)
-  req <- .next_request(timeout_ms, server)
-  if (is.list(req) && isTRUE(req$interrupted)) {
-    .raise_interrupt()
-  }
-  req
+    timeout_ms <- .validate_timeout_ms(timeout_ms)
+    req <- .next_request(timeout_ms, server)
+    if (is.list(req) && isTRUE(req$interrupted)) {
+        .raise_interrupt()
+    }
+    req
 }
 
 #' Answer a request or a WebSocket connect
@@ -114,8 +98,8 @@ next_event <- function(timeout_ms = 100L, server = NULL) {
 #' @return NULL, invisibly.
 #' @export
 send_response <- function(id, res, server = NULL) {
-  .send_response(id, res, server)
-  invisible(NULL)
+    .send_response(id, res, server)
+    invisible(NULL)
 }
 
 #' Send a WebSocket message
@@ -126,13 +110,8 @@ send_response <- function(id, res, server = NULL) {
 #'   connection is not open.
 #' @export
 ws_send <- function(id, data, server = NULL) {
-  .Call(
-    civetweb_ws_send,
-    .server_ptr(server),
-    as.integer(id),
-    data,
-    PACKAGE = "civetwebR"
-  )
+    .Call(civetweb_ws_send, .server_ptr(server), as.integer(id), data,
+          PACKAGE = "civetwebR")
 }
 
 #' Close a WebSocket connection from the server side
@@ -147,13 +126,8 @@ ws_send <- function(id, data, server = NULL) {
 #' @return \code{TRUE} if the close frame was written.
 #' @export
 ws_close <- function(id, code = 1000L, server = NULL) {
-  .Call(
-    civetweb_ws_close,
-    .server_ptr(server),
-    as.integer(id),
-    as.integer(code),
-    PACKAGE = "civetwebR"
-  )
+    .Call(civetweb_ws_close, .server_ptr(server), as.integer(id),
+          as.integer(code), PACKAGE = "civetwebR")
 }
 
 #' Run the CivetWeb driver loop (single-thread safe mode)
@@ -165,38 +139,38 @@ ws_close <- function(id, code = 1000L, server = NULL) {
 #' @return Invisibly returns TRUE when the loop exits.
 #' @export
 run_server <- function(timeout_ms = 100L) {
-  if (!.is_running()) {
-    stop("Server is not running", call. = FALSE)
-  }
-  if (.is_loop_running()) {
-    stop("Server loop is already running", call. = FALSE)
-  }
-
-  timeout_ms <- .validate_timeout_ms(timeout_ms)
-
-  .set_loop_running(TRUE)
-  on.exit(.set_loop_running(FALSE), add = TRUE)
-
-  repeat {
-    req <- .next_request(timeout_ms)
-
-    if (is.list(req) && isTRUE(req$interrupted)) {
-      break
+    if (!.is_running()) {
+        stop("Server is not running", call. = FALSE)
+    }
+    if (.is_loop_running()) {
+        stop("Server loop is already running", call. = FALSE)
     }
 
-    if (is.null(req)) {
-      next
+    timeout_ms <- .validate_timeout_ms(timeout_ms)
+
+    .set_loop_running(TRUE)
+    on.exit(.set_loop_running(FALSE), add = TRUE)
+
+    repeat {
+        req <- .next_request(timeout_ms)
+
+        if (is.list(req) && isTRUE(req$interrupted)) {
+            break
+        }
+
+        if (is.null(req)) {
+            next
+        }
+
+        if (req$type == 0L) {
+            # HTTP
+            res <- .dispatch_request(req$method, req$path, req = req)
+            .send_response(req$id, res)
+        } else {
+            # WebSocket events (CONNECT, READY, DATA, CLOSE)
+            .dispatch_ws_event(req)
+        }
     }
 
-    if (req$type == 0L) {
-      # HTTP
-      res <- .dispatch_request(req$method, req$path, req = req)
-      .send_response(req$id, res)
-    } else {
-      # WebSocket events (CONNECT, READY, DATA, CLOSE)
-      .dispatch_ws_event(req)
-    }
-  }
-
-  invisible(TRUE)
+    invisible(TRUE)
 }
