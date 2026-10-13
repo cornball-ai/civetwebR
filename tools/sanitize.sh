@@ -1,6 +1,6 @@
 #!/bin/bash
 # Hardening gate: valgrind memcheck, then AddressSanitizer plus
-# UndefinedBehaviorSanitizer, each over the whole testthat suite.
+# UndefinedBehaviorSanitizer, each over the whole tinytest suite.
 #
 # Run from the package root. The checkout is installed into scratch
 # libraries under $WORK for every pass; the ambient installed civetwebR
@@ -26,25 +26,29 @@ set -euo pipefail
 trap 'rm -f src/*.o src/civetwebR.so src/mbedtls/library/*.o' EXIT
 
 WORK="${WORK:-$(mktemp -d)}"
+mkdir -p "$WORK"
 echo "work dir: $WORK"
 
 ## The suite from the source tree against the installed package. The
 ## tests must see the scratch library, so the run proves which build
 ## it exercised before running anything.
-## NOT_CRAN: every test that opens a socket is behind skip_on_cran(),
-## and a run that skips them all would pass vacuously, so the run also
-## fails if anything was skipped (the dev machine has openssl and curl).
-export NOT_CRAN=true
+## at_home = TRUE: every test that opens a socket exits without it, and
+## a run that lets them all exit would pass vacuously, so the run also
+## fails if any file exited (the dev machine has openssl and curl).
 SUITE='lib <- Sys.getenv("CIVETWEBR_SANITIZE_LIB")
 stopifnot(nzchar(lib), identical(find.package("civetwebR"), file.path(lib, "civetwebR")))
 library(civetwebR)
-res <- testthat::test_dir("tests/testthat", package = "civetwebR",
-                          load_package = "installed", reporter = "summary",
-                          stop_on_failure = TRUE)
+out <- capture.output(res <- tinytest::run_test_dir("inst/tinytest",
+                                                    at_home = TRUE, verbose = 2))
+writeLines(out)
+if (any(grepl("Exited at", out, fixed = TRUE))) {
+  stop("a test file exited; the run proves nothing about it")
+}
+if (length(res) == 0L) stop("no tests ran")
 df <- as.data.frame(res)
-if (any(df$skipped)) {
-  print(df[df$skipped, c("file", "test")])
-  stop("tests were skipped; the run proves nothing about them")
+if (!all(df$result)) {
+  print(df[!df$result, c("file", "call")])
+  stop("tests failed")
 }
 cat("SUITE-ALL-PASS\n")'
 
@@ -57,8 +61,8 @@ clean_objects() {
     rm -f src/*.o src/civetwebR.so src/mbedtls/library/*.o
 }
 
-## --no-init-file: the checkout's .Rprofile resets .libPaths() to its
-## env/ directory, which would hide the scratch library.
+## --no-init-file: no .Rprofile, the user's or a checkout's, may change
+## .libPaths() from under the scratch library.
 R_ARGS="--no-init-file --no-save --no-restore"
 
 ## ---- plain build, for the valgrind pass ----

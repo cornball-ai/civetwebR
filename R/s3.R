@@ -1,4 +1,4 @@
-#' @export
+#' @exportS3Method print cw_request
 print.cw_request <- function(x, ...) {
   cat("<cw_request> [", x$id, "]\n", sep = "")
   cat("  Method: ", x$method, "\n", sep = "")
@@ -16,7 +16,7 @@ print.cw_request <- function(x, ...) {
   invisible(x)
 }
 
-#' @export
+#' @exportS3Method print cw_response
 print.cw_response <- function(x, ...) {
   cat("<cw_response>\n")
   cat("  Status: ", x$status, "\n", sep = "")

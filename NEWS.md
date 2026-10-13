@@ -1,3 +1,25 @@
+# civetwebR 0.0.1.6
+
+- The development stack is the tinyverse's: tinytest for the tests
+  (inst/tinytest/, run by tests/tinytest.R), tinyrox for man/ and
+  NAMESPACE, rformat for the R sources, tinypkgr for install, check
+  and build. testthat, roxygen2, pkgload and devtools are gone from
+  Suggests and from the tree, and with them upstream's env/-based
+  .Rprofile and init.R, the devcontainer and editor settings, and the
+  workflow that built GitHub releases through roxygen2.
+- Every test that opens a socket exits unless tinytest's `at_home()`
+  is TRUE; `TT_AT_HOME=TRUE` in the environment (CI sets it) runs them
+  under R CMD check too. The CI gates and tools/sanitize.sh fail when
+  any test file exited, so a run cannot pass by skipping.
+- The default-server tests take port 0 instead of 8080, and the
+  background server children run the installed package rather than
+  loading the source tree through pkgload.
+- `serve()`'s help page is no longer marked internal: roxygen2's
+  `@rdname serve` on the internal argument validator carried that
+  block's `@keywords internal` onto the page. The internal dispatch
+  helpers are undocumented now (`@noRd`); nothing exported changed.
+- README: install from cornball-ai/civetwebR.
+
 # civetwebR 0.0.1.5
 
 - `ws_message` events carry `opcode` (1 text, 2 binary, 0 continuation),

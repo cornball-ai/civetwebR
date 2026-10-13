@@ -10,13 +10,12 @@
 #' @param max_body_size Number. Maximum request body size in bytes. Default is 8MiB.
 #' @param request_timeout_ms Integer. Socket receive timeout. Default is 30s.
 #' @param ws_path String. The path WebSocket upgrades are accepted on.
-#'   Default `"/ws"`.
-#' @param keep_alive Logical. Keep HTTP connections open between requests.
-#'   Default `FALSE`.
+#'   Default \code{"/ws"}.
+#' @param keep_alive Logical. Keep HTTP connections open between
+#'   requests. Default \code{FALSE}.
 #' @param tls_cert NULL, or the path of a PEM file holding the server's
-#'   certificate and private key; see [start_server()].
-#'
-#' @rdname serve
+#'   certificate and private key; see \code{\link{start_server}}.
+#' @return Invisibly returns TRUE when the loop exits.
 #' @export
 serve <- function(
   port = 8080L,

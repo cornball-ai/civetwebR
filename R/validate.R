@@ -271,8 +271,8 @@
   request_timeout_ms
 }
 
-#' @rdname serve
-#' @keywords internal
+#' Validate serve()'s arguments together
+#' @noRd
 .validate_serve_input <- function(
   port,
   host,

@@ -95,6 +95,7 @@ unhandle <- function(method, path) {
 #' @param method HTTP method.
 #' @param path Request path.
 #' @param req Request object.
+#' @noRd
 .dispatch_request <- function(method, path, req = NULL) {
   fun <- .get_handler(method, path)
 
@@ -150,6 +151,7 @@ unhandle <- function(method, path) {
 
 #' Normalize an HTTP response
 #' @param x Object to normalize.
+#' @noRd
 .normalize_response <- function(x) {
   if (is.character(x) && length(x) == 1L) {
     x <- list(
@@ -187,6 +189,7 @@ unhandle <- function(method, path) {
 #'
 #' @param method HTTP method.
 #' @param path Request path.
+#' @noRd
 .get_handler <- function(method, path) {
   env <- .get_handlers_env()
 
@@ -215,14 +218,17 @@ clear_handlers <- function() {
 
 #' Register WebSocket event handlers
 #'
-#' A `"connect"` handler runs before the handshake and decides whether the
-#' client may upgrade: it returns `TRUE` to accept, `FALSE` to refuse with
-#' 403, or a list with a `status` to refuse with that status. It sees the
-#' upgrade request's `headers` (so `Origin` or a cookie can be checked)
-#' and `remote_addr`. Without a connect handler every upgrade is accepted.
+#' A \code{"connect"} handler runs before the handshake and decides
+#' whether the client may upgrade: it returns \code{TRUE} to accept,
+#' \code{FALSE} to refuse with 403, or a list with a \code{status} to
+#' refuse with that status. It sees the upgrade request's
+#' \code{headers} (so \code{Origin} or a cookie can be checked) and
+#' \code{remote_addr}. Without a connect handler every upgrade is
+#' accepted.
 #'
 #' @param event Character string: "connect", "open", "message", or "close".
-#' @param fun Function taking a `cw_request` object.
+#' @param fun Function taking a \code{cw_request} object.
+#' @return Invisibly returns TRUE.
 #' @export
 on_ws <- function(event, fun) {
   event <- match.arg(event, c("connect", "open", "message", "close"))

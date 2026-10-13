@@ -1,30 +1,35 @@
 #' Start the CivetWeb server
 #'
 #' Starts a server and, by default, registers it as the package's default
-#' server, the one `run_server()`, `serve()`, `ws_send()` and friends use
-#' when no `server` is given. With `register = FALSE` the server is only
-#' returned, so one R process can run several.
+#' server, the one \code{run_server()}, \code{serve()}, \code{ws_send()}
+#' and friends use when no \code{server} is given. With
+#' \code{register = FALSE} the server is only returned, so one R process
+#' can run several.
 #'
-#' @param port Integer. Port to listen on; `0` lets the OS choose (see
-#'   `server_port()`).
+#' @param port Integer. Port to listen on; \code{0} lets the OS choose
+#'   (see \code{server_port()}).
 #' @param host String. Host to expose to.
 #' @param num_threads Integer. Number of worker threads. Default is 50.
-#' @param max_body_size Number. Maximum request body size in bytes. Default is 8MiB.
-#' @param request_timeout_ms Integer. Socket receive timeout. Default is 30s.
+#' @param max_body_size Number. Maximum request body size in bytes.
+#'   Default is 8MiB.
+#' @param request_timeout_ms Integer. Socket receive timeout. Default is
+#'   30s.
 #' @param ws_path String. The path WebSocket upgrades are accepted on.
-#'   Default `"/ws"`.
-#' @param static_dirs NULL or a named character vector mapping URL prefixes
-#'   to directories, e.g. `c("/assets/" = "www")`. Requests under these
-#'   prefixes are served by CivetWeb itself, with byte ranges, and never
-#'   reach R. Distinct from the R-side `static` argument of `serve()`.
-#' @param keep_alive Logical. Keep HTTP connections open between requests.
-#'   Default `FALSE`.
+#'   Default \code{"/ws"}.
+#' @param static_dirs NULL or a named character vector mapping URL
+#'   prefixes to directories, e.g. \code{c("/assets/" = "www")}. Requests
+#'   under these prefixes are served by CivetWeb itself, with byte
+#'   ranges, and never reach R. Distinct from the R-side \code{static}
+#'   argument of \code{serve()}.
+#' @param keep_alive Logical. Keep HTTP connections open between
+#'   requests. Default \code{FALSE}.
 #' @param tls_cert NULL, or the path of a PEM file holding the server's
 #'   certificate (followed by its chain, if any) and its private key. When
 #'   given, the port speaks TLS (https and wss) through the bundled Mbed
 #'   TLS, and a plain-HTTP client on it is refused.
-#' @param register Logical. Make this the default server. Default `TRUE`.
-#' @return A server handle (class `cw_server`), invisibly.
+#' @param register Logical. Make this the default server. Default
+#'   \code{TRUE}.
+#' @return A server handle (class \code{cw_server}), invisibly.
 #' @export
 start_server <- function(
   port = 8080L,
@@ -91,8 +96,8 @@ start_server <- function(
 #' connections and releases the server. Stopping the default server clears
 #' it.
 #'
-#' @param server A server handle from `start_server()`, or NULL for the
-#'   default server.
+#' @param server A server handle from \code{start_server()}, or NULL for
+#'   the default server.
 #' @return Invisibly returns TRUE.
 #' @export
 stop_server <- function(server = NULL) {
@@ -118,7 +123,7 @@ stop_server <- function(server = NULL) {
 
 #' The port a server is listening on
 #'
-#' Useful after `start_server(port = 0)`.
+#' Useful after \code{start_server(port = 0)}.
 #'
 #' @inheritParams stop_server
 #' @return Integer port.
@@ -138,7 +143,7 @@ has_tls <- function() {
   .Call(civetweb_has_tls, PACKAGE = "civetwebR")
 }
 
-#' @export
+#' @exportS3Method print cw_server
 print.cw_server <- function(x, ...) {
   running <- .Call(civetweb_server_running, x$ptr, PACKAGE = "civetwebR")
   scheme <- if (isTRUE(x$tls)) "https" else "http"

@@ -48,43 +48,50 @@
 #' Wait for the next event
 #'
 #' The low-level driver: one call returns one event from a server, or
-#' `NULL` after `timeout_ms` with nothing to do. `run_server()` and
-#' `serve()` are loops over this; an application with its own event loop
-#' calls it directly.
+#' \code{NULL} after \code{timeout_ms} with nothing to do.
+#' \code{run_server()} and \code{serve()} are loops over this; an
+#' application with its own event loop calls it directly.
 #'
-#' Events are lists of class `cw_request` with an `event` field:
+#' Events are lists of class \code{cw_request} with an \code{event}
+#' field:
 #'
-#' * `"request"`: an HTTP request. `method`, `path`, `query`, `headers`
-#'   (named character), `body` (raw), `body_too_large`, `remote_addr`,
-#'   `remote_port`. Must be answered with `send_response()`; the worker
-#'   thread waits until then.
-#' * `"ws_connect"`: a client asks to upgrade on the WebSocket path. Same
-#'   fields as a request. Must be answered with `send_response()`: `TRUE`
-#'   accepts, `FALSE` refuses with 403, a list with a `status` refuses with
-#'   that status. Nothing is sent to the client until R decides, so this
-#'   is where an `Origin` or cookie check belongs.
-#' * `"ws_open"`: the handshake completed for the connection with this
-#'   `id`.
-#' * `"ws_message"`: a data frame arrived. `body` (raw), `binary`, `fin`
-#'   and `opcode` (1 text, 2 binary, 0 continuation). A message split
-#'   across frames arrives as several events: the first with the text or
-#'   binary opcode, the rest as continuations, the last with `fin = TRUE`;
-#'   the receiver concatenates the bodies.
-#' * `"ws_close"`: the connection with this `id` is gone.
+#' \itemize{
+#' \item \code{"request"}: an HTTP request. \code{method}, \code{path},
+#'   \code{query}, \code{headers} (named character), \code{body} (raw),
+#'   \code{body_too_large}, \code{remote_addr}, \code{remote_port}. Must
+#'   be answered with \code{send_response()}; the worker thread waits
+#'   until then.
+#' \item \code{"ws_connect"}: a client asks to upgrade on the WebSocket
+#'   path. Same fields as a request. Must be answered with
+#'   \code{send_response()}: \code{TRUE} accepts, \code{FALSE} refuses
+#'   with 403, a list with a \code{status} refuses with that status.
+#'   Nothing is sent to the client until R decides, so this is where an
+#'   \code{Origin} or cookie check belongs.
+#' \item \code{"ws_open"}: the handshake completed for the connection
+#'   with this \code{id}.
+#' \item \code{"ws_message"}: a data frame arrived. \code{body} (raw),
+#'   \code{binary}, \code{fin} and \code{opcode} (1 text, 2 binary, 0
+#'   continuation). A message split across frames arrives as several
+#'   events: the first with the text or binary opcode, the rest as
+#'   continuations, the last with \code{fin = TRUE}; the receiver
+#'   concatenates the bodies.
+#' \item \code{"ws_close"}: the connection with this \code{id} is gone.
+#' }
 #'
-#' A WebSocket connection keeps the `id` of its connect event for its
-#' whole life; `ws_send()` and `ws_close()` address it by that id.
+#' A WebSocket connection keeps the \code{id} of its connect event for
+#' its whole life; \code{ws_send()} and \code{ws_close()} address it by
+#' that id.
 #'
-#' Control frames never reach R: CivetWeb answers a ping with a pong, and
-#' a close frame from the client is echoed back with its status code
-#' before the `ws_close` event (RFC 6455 section 5.5.1).
+#' Control frames never reach R: CivetWeb answers a ping with a pong,
+#' and a close frame from the client is echoed back with its status
+#' code before the \code{ws_close} event (RFC 6455 section 5.5.1).
 #'
-#' On Ctrl-C an `interrupt` condition is signalled.
+#' On Ctrl-C an \code{interrupt} condition is signalled.
 #'
 #' @param timeout_ms Milliseconds to wait for an event. Default 100.
-#' @param server A server handle from `start_server()`, or NULL for the
-#'   default server.
-#' @return A `cw_request`, or `NULL` on timeout.
+#' @param server A server handle from \code{start_server()}, or NULL for
+#'   the default server.
+#' @return A \code{cw_request}, or \code{NULL} on timeout.
 #' @export
 next_event <- function(timeout_ms = 100L, server = NULL) {
   timeout_ms <- .validate_timeout_ms(timeout_ms)
@@ -97,11 +104,12 @@ next_event <- function(timeout_ms = 100L, server = NULL) {
 
 #' Answer a request or a WebSocket connect
 #'
-#' @param id The event's `id`.
+#' @param id The event's \code{id}.
 #' @param res For a request: a string (200, text/plain) or a list with
-#'   `status`, `headers` and `body` (character or raw). For a WebSocket
-#'   connect: `TRUE` to accept, `FALSE` to refuse with 403, or a list with
-#'   a `status` to refuse with that status.
+#'   \code{status}, \code{headers} and \code{body} (character or raw).
+#'   For a WebSocket connect: \code{TRUE} to accept, \code{FALSE} to
+#'   refuse with 403, or a list with a \code{status} to refuse with that
+#'   status.
 #' @inheritParams next_event
 #' @return NULL, invisibly.
 #' @export
@@ -114,8 +122,8 @@ send_response <- function(id, res, server = NULL) {
 #' @param id Connection ID.
 #' @param data Character string or raw vector.
 #' @inheritParams next_event
-#' @return `TRUE` if the frame was written, `FALSE` if the connection is
-#'   not open.
+#' @return \code{TRUE} if the frame was written, \code{FALSE} if the
+#'   connection is not open.
 #' @export
 ws_send <- function(id, data, server = NULL) {
   .Call(
@@ -129,14 +137,14 @@ ws_send <- function(id, data, server = NULL) {
 
 #' Close a WebSocket connection from the server side
 #'
-#' Sends a close frame with `code`; the client answers and the connection
-#' ends, which arrives later as a `ws_close` event. Further `ws_send()`
-#' calls on the id return `FALSE`.
+#' Sends a close frame with \code{code}; the client answers and the
+#' connection ends, which arrives later as a \code{ws_close} event.
+#' Further \code{ws_send()} calls on the id return \code{FALSE}.
 #'
 #' @param id Connection ID.
 #' @param code Integer close code. Default 1000 (normal closure).
 #' @inheritParams next_event
-#' @return `TRUE` if the close frame was written.
+#' @return \code{TRUE} if the close frame was written.
 #' @export
 ws_close <- function(id, code = 1000L, server = NULL) {
   .Call(

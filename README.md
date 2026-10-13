@@ -40,8 +40,7 @@ on_ws("close", function(req) {
 ## Installation
 
 ```r
-# Install from GitHub
-# devtools::install_github("vedoa/civetwebR")
+remotes::install_github("cornball-ai/civetwebR")
 ```
 
 ## Usage
