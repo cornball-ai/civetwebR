@@ -3,6 +3,7 @@
 ^env/
 ^README\.md$
 ^LICENSE\.md$
+^cran-comments\.md$
 ^\.github$
 ^run\.sh$
 ^src/.*\.o$
