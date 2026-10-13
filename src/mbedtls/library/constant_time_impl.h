@@ -33,7 +33,7 @@
  */
 #if defined(MBEDTLS_COMPILER_IS_GCC) && (__GNUC__ > 4)
     #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wredundant-decls"
+    /* civetwebR: -Wredundant-decls not suppressed; R CMD check flags that */
 #endif
 
 /* armcc5 --gnu defines __GNUC__ but doesn't support GNU's extended asm */

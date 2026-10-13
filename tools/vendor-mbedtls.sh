@@ -16,7 +16,9 @@
 # release (tests, programs, framework, 3rdparty) is needed: the default
 # configuration enables no 3rdparty code, and civetwebR's adjustments
 # to that configuration are in src/civetweb/civetwebr_mbedtls_config.h,
-# which this script leaves alone.
+# which this script leaves alone. This package's patches to the Mbed
+# TLS sources, tools/patches/mbedtls/*.patch, are applied after the
+# copy, in order.
 #
 # 3.6 is the long-term-support series; 4.x splits the crypto into a
 # separate project and would need a different layout.
@@ -52,5 +54,11 @@ cp "$src"/library/*.c "$src"/library/*.h src/mbedtls/library/
 cp -R "$src"/include src/mbedtls/include
 cp "$src"/LICENSE src/mbedtls/LICENSE
 printf '%s\n' "$VERSION" > src/mbedtls/VERSION
+
+for p in tools/patches/mbedtls/*.patch; do
+  [ -e "$p" ] || continue
+  echo "applying $p"
+  patch -p1 --no-backup-if-mismatch < "$p"
+done
 
 echo "mbedtls vendored at ${VERSION} (sha256 ${have})"

@@ -1,0 +1,26 @@
+--- a/src/mbedtls/library/constant_time_impl.h
++++ b/src/mbedtls/library/constant_time_impl.h
+@@ -33,7 +33,7 @@
+  */
+ #if defined(MBEDTLS_COMPILER_IS_GCC) && (__GNUC__ > 4)
+     #pragma GCC diagnostic push
+-    #pragma GCC diagnostic ignored "-Wredundant-decls"
++    /* civetwebR: -Wredundant-decls not suppressed; R CMD check flags that */
+ #endif
+ 
+ /* armcc5 --gnu defines __GNUC__ but doesn't support GNU's extended asm */
+--- a/src/mbedtls/library/platform_util.c
++++ b/src/mbedtls/library/platform_util.c
+@@ -119,10 +119,10 @@
+ #if defined(__clang__) || (__GNUC__ >= 10)
+ #if defined(__clang__)
+ #pragma clang diagnostic push
+-#pragma clang diagnostic ignored "-Wvla"
++/* civetwebR: -Wvla not suppressed; R CMD check flags that */
+ #elif defined(MBEDTLS_COMPILER_IS_GCC)
+ #pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wvla"
++/* civetwebR: -Wvla not suppressed; R CMD check flags that */
+ #endif
+         asm volatile ("" : : "m" (*(char (*)[len]) buf) :);
+ #if defined(__clang__)

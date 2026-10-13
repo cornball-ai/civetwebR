@@ -34,9 +34,9 @@
 #if defined(GCC_DIAGNOSTIC)
 /* Disable unused macros warnings - not all defines are required
  * for all systems and all compilers. */
-#pragma GCC diagnostic ignored "-Wunused-macros"
+/* civetwebR: -Wunused-macros not suppressed; R CMD check flags that */
 /* A padding warning is just plain useless */
-#pragma GCC diagnostic ignored "-Wpadded"
+/* civetwebR: -Wpadded not suppressed; R CMD check flags that */
 #endif
 
 #if defined(__clang__) /* GCC does not (yet) support this pragma */
@@ -44,7 +44,7 @@
  * are reserved ids according to C99, so we need to disable a
  * warning for that. */
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+/* civetwebR: -Wreserved-id-macro not suppressed; R CMD check flags that */
 #endif
 
 #if defined(_WIN32)
@@ -312,7 +312,7 @@ __cyg_profile_func_exit(void *this_fn, void *call_site)
  * again.
  */
 
-#pragma GCC diagnostic ignored "-Wunused-function"
+/* civetwebR: -Wunused-function not suppressed; R CMD check flags that */
 
 #define FUNCTION_MAY_BE_UNUSED /* __attribute__((unused)) */
 
@@ -336,7 +336,7 @@ __cyg_profile_func_exit(void *this_fn, void *call_site)
 /* When using -Weverything, clang does not accept it's own headers
  * in a release build configuration. Disable what is too much in
  * -Weverything. */
-#pragma clang diagnostic ignored "-Wdisabled-macro-expansion"
+/* civetwebR: -Wdisabled-macro-expansion not suppressed; R CMD check flags that */
 #endif
 
 #if defined(__GNUC__) || defined(__MINGW32__)
@@ -361,8 +361,8 @@ __cyg_profile_func_exit(void *this_fn, void *call_site)
 #if defined(__clang__)
 #if (__clang_major__ == 3) && ((__clang_minor__ == 7) || (__clang_minor__ == 8))
 /* Avoid warnings for Xcode 7. It seems it does no longer exist in Xcode 8 */
-#pragma clang diagnostic ignored "-Wno-reserved-id-macro"
-#pragma clang diagnostic ignored "-Wno-keyword-macro"
+/* civetwebR: -Wno-reserved-id-macro not suppressed; R CMD check flags that */
+/* civetwebR: -Wno-keyword-macro not suppressed; R CMD check flags that */
 #endif
 #endif
 
@@ -1040,7 +1040,7 @@ timegm(struct tm *tm)
 #if defined(GCC_DIAGNOSTIC)
 /* Show no warning in case system functions are not used. */
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
+/* civetwebR: -Wunused-function not suppressed; R CMD check flags that */
 #endif
 
 
@@ -1108,12 +1108,12 @@ static pthread_mutexattr_t pthread_mutex_attr;
 #if defined(GCC_DIAGNOSTIC)
 /* Show no warning in case system functions are not used. */
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
+/* civetwebR: -Wunused-function not suppressed; R CMD check flags that */
 #endif /* defined(GCC_DIAGNOSTIC) */
 #if defined(__clang__)
 /* Show no warning in case system functions are not used. */
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
+/* civetwebR: -Wunused-function not suppressed; R CMD check flags that */
 #endif
 
 static pthread_mutex_t global_lock_mutex;
@@ -1653,12 +1653,12 @@ struct mg_workerTLS {
 #if defined(GCC_DIAGNOSTIC)
 /* Show no warning in case system functions are not used. */
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
+/* civetwebR: -Wunused-function not suppressed; R CMD check flags that */
 #endif /* defined(GCC_DIAGNOSTIC) */
 #if defined(__clang__)
 /* Show no warning in case system functions are not used. */
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
+/* civetwebR: -Wunused-function not suppressed; R CMD check flags that */
 #endif
 
 
@@ -1682,7 +1682,7 @@ mg_current_thread_id(void)
 
 #if defined(__clang__)
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunreachable-code"
+/* civetwebR: -Wunreachable-code not suppressed; R CMD check flags that */
 	/* For every compiler, either "sizeof(pthread_t) > sizeof(unsigned long)"
 	 * or not, so one of the two conditions will be unreachable by construction.
 	 * Unfortunately the C standard does not define a way to check this at
@@ -3664,7 +3664,7 @@ get_proto_name(const struct mg_connection *conn)
 {
 #if defined(__clang__)
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunreachable-code"
+/* civetwebR: -Wunreachable-code not suppressed; R CMD check flags that */
 	/* Depending on USE_WEBSOCKET and NO_SSL, some oft the protocols might be
 	 * not supported. Clang raises an "unreachable code" warning for parts of ?:
 	 * unreachable, but splitting into four different #ifdef clauses here is
@@ -3885,7 +3885,7 @@ skip_quoted(char **buf,
 #if defined(GCC_DIAGNOSTIC)
 		/* Disable spurious conversion warning for GCC */
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-conversion"
+/* civetwebR: -Wsign-conversion not suppressed; R CMD check flags that */
 #endif /* defined(GCC_DIAGNOSTIC) */
 
 		end_whitespace = end_word + strspn(&end_word[1], whitespace) + 1;
@@ -4879,7 +4879,7 @@ mg_send_http_redirect(struct mg_connection *conn,
 #if defined(GCC_DIAGNOSTIC)
 /* Show no warning in case system functions are not used. */
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
+/* civetwebR: -Wunused-function not suppressed; R CMD check flags that */
 #endif
 
 
@@ -5263,7 +5263,7 @@ mg_mkdir(const struct mg_connection *conn, const char *path, int mode)
 #if defined(GCC_DIAGNOSTIC)
 /* Show no warning in case system functions are not used. */
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
+/* civetwebR: -Wunused-function not suppressed; R CMD check flags that */
 #endif
 
 
@@ -5512,7 +5512,7 @@ mg_join_thread(pthread_t threadid)
 #if defined(GCC_DIAGNOSTIC)
 /* Show no warning in case system functions are not used. */
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
+/* civetwebR: -Wunused-function not suppressed; R CMD check flags that */
 #endif
 
 
@@ -13916,7 +13916,7 @@ mg_websocket_write_exec(struct mg_connection *conn,
 #if defined(GCC_DIAGNOSTIC)
 	/* Disable spurious conversion warning for GCC */
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
+/* civetwebR: -Wconversion not suppressed; R CMD check flags that */
 #endif
 
 	/* Note that POSIX/Winsock's send() is threadsafe
@@ -17609,7 +17609,7 @@ ssl_servername_callback(SSL *ssl, int *ad, void *arg)
 {
 #if defined(GCC_DIAGNOSTIC)
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcast-align"
+/* civetwebR: -Wcast-align not suppressed; R CMD check flags that */
 #endif /* defined(GCC_DIAGNOSTIC) */
 
 	/* We used an aligned pointer in SSL_set_app_data */
@@ -18330,7 +18330,7 @@ close_socket_gracefully(struct mg_connection *conn)
 #endif
 #if defined(GCC_DIAGNOSTIC)
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
+/* civetwebR: -Wconversion not suppressed; R CMD check flags that */
 #endif
 		/* Data type of linger structure elements may differ,
 		 * so we don't know what cast we need here.
@@ -18593,7 +18593,7 @@ mg_connect_client_impl(const struct mg_client_options *client_options,
 
 #if defined(GCC_DIAGNOSTIC)
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcast-align"
+/* civetwebR: -Wcast-align not suppressed; R CMD check flags that */
 #endif /* defined(GCC_DIAGNOSTIC) */
 	/* conn_size is aligned to 8 bytes */
 
@@ -22499,7 +22499,7 @@ mg_get_system_info(char *buffer, int buflen)
 		/* Disable idiotic compiler warning -Wdate-time, appeared in gcc5. This
 		 * does not work in some versions. If "BUILD_DATE" is defined to some
 		 * string, it is used instead of __DATE__. */
-#pragma GCC diagnostic ignored "-Wdate-time"
+/* civetwebR: -Wdate-time not suppressed; R CMD check flags that */
 #endif
 #endif
 		const char *bd = __DATE__;
