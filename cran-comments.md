@@ -9,14 +9,16 @@
 
 ## R CMD check results
 
-0 errors | 0 warnings | 2 notes
+0 errors | 0 warnings | 1 note
 
 - New submission.
-- "checking pragmas in C/C++ headers and code": src/civetweb.c and
-  two Mbed TLS files carry pragmas that suppress compiler diagnostics.
-  They are in the bundled upstream sources, unchanged apart from the
-  patches in tools/patches/; the one pragma R treats as significant
-  (-Wformat-nonliteral) was removed from CivetWeb by patch 0004.
+
+The first submission, 0.1.0 on 2026-10-13, drew a NOTE for pragmas
+suppressing diagnostics in the bundled CivetWeb and Mbed TLS sources.
+0.1.1 removes every one of them (tools/patches/0007 and
+tools/patches/mbedtls/0001). What they hid is five static helpers
+CivetWeb does not use in this configuration, which gcc -Wall reports
+as defined but not used.
 
 ## Spelling
 

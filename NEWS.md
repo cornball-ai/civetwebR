@@ -1,3 +1,14 @@
+# civetwebR 0.1.1
+
+- No pragma in the bundled sources suppresses a compiler diagnostic
+  any more. CRAN's incoming check flagged the 23 in CivetWeb and 3 in
+  Mbed TLS as a NOTE, which a new submission cannot carry.
+  tools/patches/0007 and tools/patches/mbedtls/0001 replace each with
+  a comment, and tools/vendor-mbedtls.sh now applies its patches as
+  vendor-civetweb.sh does. What they hid: five static helpers CivetWeb
+  leaves unused in this configuration, which gcc -Wall reports as
+  defined but not used; R does not count that as significant.
+
 # civetwebR 0.1.0
 
 First CRAN release. civetwebR began as vedoa/civetwebR, an embedded

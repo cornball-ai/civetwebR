@@ -189,6 +189,9 @@ openssl req -x509 -newkey rsa:2048 -nodes -days 365 -subj /CN=localhost \
   positioned with `lseek()` on the descriptor it is then read from.
   `fseeko()` on the stream left the descriptor past the data on macOS,
   so a byte range of a small file came back empty.
+- `0007-no-diagnostic-pragmas.patch`: no pragma suppresses a compiler
+  diagnostic. R CMD check reports every such pragma as a NOTE, which a
+  new CRAN submission cannot carry.
 
 `src/civetweb/external_mg_cry_internal_impl.inl` replaces CivetWeb's
 error logging, which would otherwise write to stderr or a log file.
@@ -196,10 +199,11 @@ error logging, which would otherwise write to stderr or a log file.
 patches.
 
 `src/mbedtls/` is Mbed TLS at the release in `src/mbedtls/VERSION`,
-fetched and checksum-verified by `tools/vendor-mbedtls.sh [<version>]`.
-`src/civetweb/civetwebr_mbedtls_config.h` holds this package's few
-changes to its default configuration. Copyright notices for both
-libraries are in `inst/COPYRIGHTS`.
+fetched and checksum-verified by `tools/vendor-mbedtls.sh [<version>]`,
+which then applies `tools/patches/mbedtls/*.patch` (the same pragma
+removal). `src/civetweb/civetwebr_mbedtls_config.h` holds this
+package's few changes to its default configuration. Copyright notices
+for both libraries are in `inst/COPYRIGHTS`.
 
 ## Checks
 
