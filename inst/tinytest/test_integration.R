@@ -138,3 +138,32 @@ local({
     expect_true(any(grepl("X-Body-Large: TRUE", res2)))
     expect_equal(tail(res2, 1), "50")
 })
+
+# --- a finished connection ends with a FIN, not a reset ---
+# The server closed with SO_LINGER {on, 0}, which turns the close after
+# a response into a TCP reset. A client reading in the same thread
+# (curl, R) had already taken the response; one reading through an
+# event loop (dart:io) saw the error first and dropped the response,
+# about one request in ten. A graceful close leaves the server's side
+# of the connection in TIME_WAIT; a reset leaves nothing, so the
+# kernel's own table tells the two apart.
+
+if (file.exists("/proc/net/tcp")) local({
+    port <- sample(10000:20000, 1)
+    p <- serve_bg(port, setup = function() {
+        handle("GET", "/fin", function(req) "finished")
+    })
+    on.exit(if (p$is_alive()) p$kill(), add = TRUE)
+    wait_for_server(port, p)
+
+    lines <- http_raw(port,
+                      "GET /fin HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n")
+    expect_true(any(grepl("finished", lines, fixed = TRUE)))
+    Sys.sleep(0.2)
+    tcp <- read.table("/proc/net/tcp", header = FALSE, skip = 1,
+                      stringsAsFactors = FALSE, fill = TRUE)
+    local_port <- strtoi(sub(".*:", "", tcp$V2), 16L)
+    # 06 is TIME_WAIT
+    expect_true(any(local_port == port & tcp$V4 == "06"),
+                info = "the server's side of a closed connection is in TIME_WAIT")
+})

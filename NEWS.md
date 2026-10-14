@@ -1,3 +1,11 @@
+# civetwebR 0.1.1.1
+
+- A connection is closed with a FIN, not a reset. The server set
+  linger_timeout_ms = 0, so civetweb closed every HTTP connection with
+  SO_LINGER {on, 0}: a reset right behind the response, which a client
+  reading through an event loop (dart:io) saw before the response and
+  reported as "Broken pipe", about one request in ten.
+
 # civetwebR 0.1.1
 
 - No pragma in the bundled sources suppresses a compiler diagnostic

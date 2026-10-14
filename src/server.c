@@ -935,7 +935,13 @@ SEXP civetweb_start_server(SEXP portS, SEXP hostS, SEXP threadsS, SEXP max_bodyS
   opts[k++] = "listening_ports";       opts[k++] = addr;
   opts[k++] = "num_threads";           opts[k++] = threads_buf;
   opts[k++] = "request_timeout_ms";    opts[k++] = timeout_buf;
-  opts[k++] = "linger_timeout_ms";     opts[k++] = "0";
+  /* No linger_timeout_ms: civetweb's default is to leave SO_LINGER
+   * alone, so a close after the response is a FIN and the response
+   * reaches the client. linger_timeout_ms = 0 closed with SO_LINGER
+   * {on, 0}, which is a reset: a client that had not yet read the
+   * response lost it ("Broken pipe"), about one request in ten for a
+   * client reading through an event loop (dart:io), never for a
+   * client reading in the same thread (curl). */
   opts[k++] = "enable_keep_alive";     opts[k++] = keep_alive ? "yes" : "no";
   opts[k++] = "enable_directory_listing"; opts[k++] = "no";
   /* civetweb answers WebSocket pings with pongs itself; R never sees

@@ -1,7 +1,7 @@
 Package: civetwebR
 Type: Package
 Title: Embedded HTTP and WebSocket Server Through 'CivetWeb'
-Version: 0.1.1
+Version: 0.1.1.1
 Authors@R: c(
     person("Troy", "Hernandez", email = "troy@cornball.ai",
            role = c("aut", "cre"),
