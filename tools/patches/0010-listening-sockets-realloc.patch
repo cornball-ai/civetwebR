@@ -1,0 +1,16 @@
+--- a/src/civetweb.c
++++ b/src/civetweb.c
+@@ -16520,7 +16542,12 @@ set_ports_option(struct mg_context *phys_ctx)
+ 			mg_cry_ctx_internal(phys_ctx, "%s", "Out of memory");
+ 			closesocket(so.sock);
+ 			so.sock = INVALID_SOCKET;
+-			mg_free(ptr);
++			/* civetwebR: the first realloc above already moved the array,
++			 * so freeing it here left listening_sockets dangling and the
++			 * next iteration (and close_all_listening_sockets()) used freed
++			 * memory. Keep the array (upstream fix a016529, via the Pi-hole
++			 * fork DL6ER/civetweb). */
++			phys_ctx->listening_sockets = ptr;
+ 			continue;
+ 		}
+ 

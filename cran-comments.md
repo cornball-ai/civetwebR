@@ -34,7 +34,11 @@ suppressing diagnostics in the bundled sources; 0.1.1 removed every
 one of them (tools/patches/0007 and tools/patches/mbedtls/0001).
 
 Since 0.1.1 the server also closes an HTTP connection with a FIN
-instead of a reset (NEWS), hence the version bump to 0.1.2.
+instead of a reset, and two request-framing fixes that upstream
+CivetWeb has open as pull requests but has not merged (a request with
+more than 64 headers is refused rather than truncated; a chunk size
+past INT64_MAX is a protocol error) are carried as patches under
+tools/patches/ (NEWS). Hence the version bump to 0.1.3.
 
 ## Test environments
 

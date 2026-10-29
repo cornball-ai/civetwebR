@@ -104,6 +104,7 @@ typedef struct cw_request {
   unsigned char *req_body;
   size_t req_body_len;
   int req_body_too_large;
+  int req_body_malformed;    /* mg_read() failed mid-body: bad chunking */
   int ws_fin;                /* WS_DATA: final frame of a message */
   int ws_binary;             /* WS_DATA: binary (1) or text (0) frame */
   int ws_opcode;             /* WS_DATA: 1 text, 2 binary, 0 continuation */
@@ -362,6 +363,7 @@ static void read_body(cw_server_t *s, cw_request_t *r, struct mg_connection *con
   r->req_body = NULL;
   r->req_body_len = 0;
   r->req_body_too_large = 0;
+  r->req_body_malformed = 0;
   if (!conn || !req || req->content_length == 0) return;
 
   long long clen = req->content_length;
@@ -384,6 +386,9 @@ static void read_body(cw_server_t *s, cw_request_t *r, struct mg_connection *con
     }
     if ((size_t)n > to_copy) r->req_body_too_large = 1;
   }
+  /* -1 is a protocol error in a chunked body (a chunk size that is not
+   * hex, or does not fit, or a bad trailer), not end of data. */
+  if (n < 0) r->req_body_malformed = 1;
   r->req_body_len = total_read;
   if (total_read == 0) { free(r->req_body); r->req_body = NULL; }
 }
@@ -580,6 +585,15 @@ static int http_handler(struct mg_connection *conn, void *cbdata) {
   read_body(s, r, conn, req);
   if (r->alloc_failed) {
     mg_printf(conn, "HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\nContent-Length: 0\r\n\r\n");
+    free_req(r);
+    return 1;
+  }
+  if (r->req_body_malformed) {
+    /* The body could not be framed, so whatever was read is not the
+     * request the client sent. Refuse it before R sees it; the
+     * connection cannot be reused since the rest of the body is
+     * unread. */
+    mg_printf(conn, "HTTP/1.1 400 Bad Request\r\nConnection: close\r\nContent-Length: 0\r\n\r\n");
     free_req(r);
     return 1;
   }

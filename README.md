@@ -192,6 +192,22 @@ openssl req -x509 -newkey rsa:2048 -nodes -days 365 -subj /CN=localhost \
 - `0007-no-diagnostic-pragmas.patch`: no pragma suppresses a compiler
   diagnostic. R CMD check reports every such pragma as a NOTE, which a
   new CRAN submission cannot carry.
+- `0008-chunk-size-overflow.patch`: a chunk size that does not fit is
+  a protocol error. Past the remaining `int64_t` range it made
+  `content_len` negative, which `mg_read()` takes as "read until the
+  connection is closed" (upstream PR #1449, open); past `ULONG_MAX`
+  where `long` is 32 bits (Windows) `strtoul()` saturated below that
+  check and the server waited for 4 GiB of body.
+- `0009-reject-over-max-headers.patch`: a request with more than 64
+  headers is refused instead of having the extra headers dropped, a
+  `Content-Length` or `Transfer-Encoding` among them included
+  (upstream issue #1446, PR #1448, open).
+- `0010-listening-sockets-realloc.patch`: a failed second realloc in
+  `set_ports_option()` no longer frees the array the first one moved
+  (upstream commit a016529, carried by the Pi-hole fork).
+
+Upstream has had no maintainer activity since 2026-04-19; the open
+PRs above are tracked so the patches can be dropped when they merge.
 
 `src/civetweb/external_mg_cry_internal_impl.inl` replaces CivetWeb's
 error logging, which would otherwise write to stderr or a log file.

@@ -1,5 +1,18 @@
-# civetwebR 0.1.2
+# civetwebR 0.1.3
 
+- Request framing is checked where upstream CivetWeb leaves it open.
+  A request with more than 64 headers is refused with 400; civetweb
+  accepted it and dropped the extra headers, a Content-Length or
+  Transfer-Encoding among them included (upstream issue #1446, PR
+  #1448). A chunk size that does not fit is a protocol error, answered
+  with 400 before R sees the request: past INT64_MAX it made
+  content_len negative, and mg_read() then returned the rest of the
+  stream as a body of unknown length (upstream PR #1449); past
+  ULONG_MAX where long is 32 bits (Windows) strtoul() saturated, and
+  the server waited for 4 GiB of body. A failed realloc at start no
+  longer frees the listening-socket array (upstream commit a016529,
+  via the Pi-hole fork). Patches 0008 to 0010: upstream has merged
+  nothing since 2026-04-19, so the open PRs are carried here.
 - Authors@R names every individual the bundled sources credit as an
   author, not only their copyright holders: the three Mbed TLS modules
   with a Doxygen \author tag (Adriaan de Jong, Daniel King, Mathias

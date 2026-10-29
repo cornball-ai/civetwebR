@@ -339,6 +339,72 @@ local({
     expect_match(p$get_result(), "400")
 })
 
+# --- Request framing: header count and chunk sizes (patches 0008, 0009) ---
+# One raw request from a child process; this process drives next_event()
+# and answers any request with 200. What comes back: the child's first
+# response line and the request event R saw, if any.
+
+local({
+    srv <- start_server(port = 0L, register = FALSE)
+    on.exit(stop_server(srv), add = TRUE)
+    port <- server_port(srv)
+
+    exchange <- function(lines) {
+        p <- callr::r_bg(function(port, lines) {
+            con <- socketConnection("127.0.0.1", port, open = "r+b",
+                                    blocking = TRUE)
+            on.exit(close(con))
+            writeLines(lines, con, sep = "\r\n")
+            flush(con)
+            readLines(con, n = 1L, warn = FALSE)
+        }, args = list(port, lines))
+        on.exit(if (p$is_alive()) p$kill(), add = TRUE)
+        seen <- NULL
+        deadline <- Sys.time() + 3
+        while (Sys.time() < deadline && p$is_alive()) {
+            ev <- next_event(50L, srv)
+            if (!is.null(ev) && ev$event == "request") {
+                seen <- ev
+                send_response(ev$id, "ok", srv)
+            }
+        }
+        p$wait(5000)
+        # no response at all (the server waiting for more body, as the
+        # unpatched chunk-size path did) is a failed expectation, not an
+        # error that ends the file
+        status <- if (p$is_alive()) { p$kill(); "" } else p$get_result()
+        list(status = status, seen = seen)
+    }
+    head <- c("Host: x", "Connection: close")
+    extra <- function(n) sprintf("X-H%d: v", seq_len(n))
+
+    # exactly MG_MAX_HEADERS (64) headers reach R, every one of them
+    r <- exchange(c("GET /x HTTP/1.1", head, extra(62L), ""))
+    expect_match(r$status, "200")
+    expect_equal(length(r$seen$headers), 64L)
+
+    # one more is refused with 400 before R; civetweb used to accept the
+    # request and drop the extra headers, a Content-Length or
+    # Transfer-Encoding among them included
+    r <- exchange(c("GET /x HTTP/1.1", head, extra(63L), ""))
+    expect_match(r$status, "400")
+    expect_null(r$seen)
+
+    # a chunked body is delivered whole
+    r <- exchange(c("POST /x HTTP/1.1", head, "Transfer-Encoding: chunked",
+                    "", "3", "abc", "0", ""))
+    expect_match(r$status, "200")
+    expect_equal(rawToChar(r$seen$body), "abc")
+
+    # a chunk size past INT64_MAX is a protocol error, refused with 400
+    # before R. Unchecked, it made content_len negative, and mg_read()
+    # then returned the bytes that follow as a body of unknown length.
+    r <- exchange(c("POST /x HTTP/1.1", head, "Transfer-Encoding: chunked",
+                    "", "8000000000000000", "abc", "0", ""))
+    expect_match(r$status, "400")
+    expect_null(r$seen)
+})
+
 # --- run_server() returns cleanly on interrupt ---
 # Not on Windows, as before: the interrupt does not reach the child
 # there the way Ctrl-C does.
