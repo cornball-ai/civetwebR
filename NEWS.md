@@ -1,4 +1,4 @@
-# civetwebR 0.1.1.1
+# civetwebR 0.1.2
 
 - Authors@R names every individual the bundled sources credit as an
   author, not only their copyright holders: the three Mbed TLS modules
