@@ -1,5 +1,15 @@
-# civetwebR 0.1.1.1
+# civetwebR 0.1.2
 
+- Authors@R names every individual the bundled sources credit as an
+  author, not only their copyright holders: the three Mbed TLS modules
+  with a Doxygen \author tag (Adriaan de Jong, Daniel King, Mathias
+  Olsson) and Simon Tatham, who wrote the accelerated SHA-512 in Mbed
+  TLS for PuTTY. No Face Press, LLC and F-Secure Corporation, which
+  CivetWeb's LICENSE.md names as copyright holders, are `cph`.
+  inst/civetweb/LICENSE.md now carries only the CivetWeb section of
+  that file, not the licences of the Lua, SQLite, Duktape and zlib
+  components this package does not bundle. inst/COPYRIGHTS lists the
+  same per file. CRAN's review of 0.1.1 asked for this.
 - A connection is closed with a FIN, not a reset. The server set
   linger_timeout_ms = 0, so civetweb closed every HTTP connection with
   SO_LINGER {on, 0}: a reset right behind the response, which a client

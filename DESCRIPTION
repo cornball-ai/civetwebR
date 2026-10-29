@@ -1,7 +1,7 @@
 Package: civetwebR
 Type: Package
 Title: Embedded HTTP and WebSocket Server Through 'CivetWeb'
-Version: 0.1.1.1
+Version: 0.1.2
 Authors@R: c(
     person("Troy", "Hernandez", email = "troy@cornball.ai",
            role = c("aut", "cre"),
@@ -14,12 +14,14 @@ Authors@R: c(
            comment = "CivetWeb, bundled in src/civetweb.c and src/civetweb/"),
     person("Sergey", "Lyubka", role = "cph",
            comment = "Mongoose, from which CivetWeb descends"),
+    person("No Face Press, LLC", role = c("ctb", "cph"),
+           comment = "Thomas Davis; a CivetWeb copyright holder per its LICENSE.md, and amalgamated src/civetweb/md5.inl"),
+    person("F-Secure Corporation", role = "cph",
+           comment = "a CivetWeb copyright holder per its LICENSE.md"),
     person("Aladdin Enterprises", role = "cph",
            comment = "the MD5 implementation in src/civetweb/md5.inl"),
     person("L. Peter", "Deutsch", role = "ctb",
            comment = "author of src/civetweb/md5.inl"),
-    person("No Face Press, LLC", role = "ctb",
-           comment = "amalgamated md5.inl for CivetWeb"),
     person("Steve", "Reid", role = "ctb",
            comment = "author of src/civetweb/sha1.inl (public domain)"),
     person("James H.", "Brown", role = "ctb",
@@ -29,7 +31,15 @@ Authors@R: c(
     person("Ralph", "Giles", role = "ctb",
            comment = "src/civetweb/sha1.inl"),
     person("The Mbed TLS Contributors", role = "cph",
-           comment = "Mbed TLS, bundled in src/mbedtls/"))
+           comment = "Mbed TLS, bundled in src/mbedtls/"),
+    person("Adriaan", "de Jong", role = "ctb",
+           comment = "Mbed TLS cipher and message-digest modules (cipher.c, cipher_wrap.c, md.c and their headers)"),
+    person("Daniel", "King", role = "ctb",
+           comment = "Mbed TLS ChaCha20 and Poly1305 (chacha20.c and the chacha20, chachapoly and poly1305 headers)"),
+    person("Mathias", "Olsson", role = "ctb",
+           comment = "Mbed TLS PKCS#5 (pkcs5.c, pkcs5.h)"),
+    person("Simon", "Tatham", role = c("ctb", "cph"),
+           comment = "the accelerated SHA-512 in Mbed TLS sha512.c, written for PuTTY under MIT and dual-licensed Apache-2.0 with his permission"))
 Copyright: See inst/COPYRIGHTS for the bundled CivetWeb and Mbed TLS.
 SystemRequirements: GNU make
 Description: An embedded HTTP and WebSocket server. The bundled 'CivetWeb'
