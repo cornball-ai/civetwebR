@@ -192,10 +192,12 @@ openssl req -x509 -newkey rsa:2048 -nodes -days 365 -subj /CN=localhost \
 - `0007-no-diagnostic-pragmas.patch`: no pragma suppresses a compiler
   diagnostic. R CMD check reports every such pragma as a NOTE, which a
   new CRAN submission cannot carry.
-- `0008-chunk-size-overflow.patch`: a chunk size that does not fit the
-  remaining `int64_t` range is a protocol error. Unchecked, it made
+- `0008-chunk-size-overflow.patch`: a chunk size that does not fit is
+  a protocol error. Past the remaining `int64_t` range it made
   `content_len` negative, which `mg_read()` takes as "read until the
-  connection is closed" (upstream PR #1449, open).
+  connection is closed" (upstream PR #1449, open); past `ULONG_MAX`
+  where `long` is 32 bits (Windows) `strtoul()` saturated below that
+  check and the server waited for 4 GiB of body.
 - `0009-reject-over-max-headers.patch`: a request with more than 64
   headers is refused instead of having the extra headers dropped, a
   `Content-Length` or `Transfer-Encoding` among them included

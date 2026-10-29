@@ -6951,7 +6951,19 @@ mg_read(struct mg_connection *conn, void *buf, size_t len)
 					if ((i > 1) && (lenbuf[i] == '\n')
 					    && (lenbuf[i - 1] == '\r')) {
 						lenbuf[i + 1] = 0;
+						/* civetwebR: a chunk size that does not fit unsigned
+						 * long saturates at ULONG_MAX, which on a platform
+						 * with 32-bit longs (Windows) is below INT64_MAX, so
+						 * the range check further down cannot see it and the
+						 * server would wait for 4 GiB of body. ERANGE is a
+						 * protocol error (strtoul's own errno, not civetweb's
+						 * ERRNO, which is GetLastError() on Windows). */
+						errno = 0;
 						chunkSize = strtoul(lenbuf, &end, 16);
+						if (errno == ERANGE) {
+							conn->is_chunked = 2;
+							return -1;
+						}
 						if (chunkSize == 0) {
 							/* regular end of content */
 							conn->is_chunked = 3;
