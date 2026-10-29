@@ -5,9 +5,13 @@ CivetWeb (src/civetweb.c, src/civetweb.h, src/civetweb/*.inl except the
 external_*.inl hooks written for this package)
   Copyright (c) 2013-2025 the Civetweb developers
   Copyright (c) 2004-2013 Sergey Lyubka
+  Copyright (c) 2013 No Face Press, LLC (Thomas Davis)
+  Copyright (c) 2013 F-Secure Corporation
   MIT license. https://github.com/civetweb/civetweb
-  The commit vendored is recorded in src/civetweb/COMMIT, and this
-  package's patches to it are in tools/patches/.
+  The file headers carry the first two lines; CivetWeb's LICENSE.md,
+  whose applicable section is inst/civetweb/LICENSE.md, carries all
+  four. The commit vendored is recorded in src/civetweb/COMMIT, and
+  this package's patches to it are in tools/patches/.
 
   src/civetweb/md5.inl: an independent MD5 implementation (RFC 1321)
   by L. Peter Deutsch, amalgamated into one file for CivetWeb by No
@@ -37,6 +41,13 @@ external_*.inl hooks written for this package)
   src/civetweb/sha1.inl: SHA-1 in C by Steve Reid, with modifications
   by James H. Brown, Steve Reid, Saul Kravitz and Ralph Giles, each
   marked "100% Public Domain" in the file. No copyright is claimed.
+  (Chris Hall is credited in the file for reporting a bug, not as an
+  author.)
+
+  src/civetweb/sort.inl: CivetWeb's sort, taken by its maintainer from
+  https://github.com/bel2125/sort_r (MIT, "Copyright (c) 2022
+  bel2125", the GitHub account of a CivetWeb developer). The file
+  carries CivetWeb's copyright.
 
 Mbed TLS (src/mbedtls/)
   Copyright The Mbed TLS Contributors
@@ -44,3 +55,21 @@ Mbed TLS (src/mbedtls/)
   Apache-2.0. The full text is in src/mbedtls/LICENSE.
   https://github.com/Mbed-TLS/mbedtls
   The release vendored is recorded in src/mbedtls/VERSION.
+
+  Every file carries the copyright line above. Doxygen \author tags in
+  these files name the individual who wrote the module, a contributor
+  under that copyright:
+    Adriaan de Jong: library/cipher.c, cipher_wrap.c, cipher_wrap.h,
+      md.c, md_wrap.h; include/mbedtls/cipher.h, md.h
+    Daniel King: library/chacha20.c; include/mbedtls/chacha20.h,
+      chachapoly.h, poly1305.h
+    Mathias Olsson: library/pkcs5.c; include/mbedtls/pkcs5.h
+
+  library/sha512.c: the accelerated SHA-512 (Armv8 crypto extension)
+  section was, as its comment records, "originally written by Simon
+  Tatham for PuTTY, under the MIT licence; dual-licensed as Apache 2
+  with his kind permission".
+
+  Algorithm designers named in comments (Ron Rivest, MD5; Horst
+  Feistel, DES; Vincent Rijmen, AES; Daniel J. Bernstein, ChaCha20 and
+  Poly1305) did not write this code and hold no copyright in it.
