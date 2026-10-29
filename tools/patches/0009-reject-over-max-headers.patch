@@ -1,0 +1,18 @@
+--- a/src/civetweb.c
++++ b/src/civetweb.c
+@@ -11375,6 +11388,15 @@ parse_http_request(char *buf, int len, struct mg_request_info *ri)
+ 		/* Error while parsing headers */
+ 		return -1;
+ 	}
++	/* civetwebR: parse_http_headers() stops after MG_MAX_HEADERS without
++	 * reaching the empty line, so a request with more headers was accepted
++	 * with the rest silently dropped, a Content-Length or Transfer-Encoding
++	 * among them included, which changes the request framing (upstream
++	 * issue #1446, PR #1448). */
++	if ((ri->num_headers == (int)MG_MAX_HEADERS) && (*buf != '\r')
++	    && (*buf != '\n') && (*buf != '\0')) {
++		return -1;
++	}
+ 
+ 	return request_length + init_skip;
+ }

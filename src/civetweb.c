@@ -7020,6 +7020,19 @@ mg_read(struct mg_connection *conn, void *buf, size_t len)
 					break;
 				}
 
+				/* civetwebR: the chunk size comes from the peer. A value that
+				 * does not fit into the rest of the int64_t range either
+				 * overflows content_len or, cast to int64_t, makes it
+				 * negative, which mg_read_inner() takes as "read until the
+				 * connection is closed". Compare as uint64_t: unsigned long
+				 * may be 32 bit. Here content_len == consumed_content >= 0
+				 * (upstream PR #1449). */
+				if ((uint64_t)chunkSize
+				    > (uint64_t)(INT64_MAX - conn->content_len)) {
+					conn->is_chunked = 2;
+					return -1;
+				}
+
 				/* append a new chunk */
 				conn->content_len += (int64_t)chunkSize;
 			}
@@ -11373,6 +11386,15 @@ parse_http_request(char *buf, int len, struct mg_request_info *ri)
 	ri->num_headers = parse_http_headers(&buf, ri->http_headers);
 	if (ri->num_headers < 0) {
 		/* Error while parsing headers */
+		return -1;
+	}
+	/* civetwebR: parse_http_headers() stops after MG_MAX_HEADERS without
+	 * reaching the empty line, so a request with more headers was accepted
+	 * with the rest silently dropped, a Content-Length or Transfer-Encoding
+	 * among them included, which changes the request framing (upstream
+	 * issue #1446, PR #1448). */
+	if ((ri->num_headers == (int)MG_MAX_HEADERS) && (*buf != '\r')
+	    && (*buf != '\n') && (*buf != '\0')) {
 		return -1;
 	}
 
@@ -16520,7 +16542,12 @@ set_ports_option(struct mg_context *phys_ctx)
 			mg_cry_ctx_internal(phys_ctx, "%s", "Out of memory");
 			closesocket(so.sock);
 			so.sock = INVALID_SOCKET;
-			mg_free(ptr);
+			/* civetwebR: the first realloc above already moved the array,
+			 * so freeing it here left listening_sockets dangling and the
+			 * next iteration (and close_all_listening_sockets()) used freed
+			 * memory. Keep the array (upstream fix a016529, via the Pi-hole
+			 * fork DL6ER/civetweb). */
+			phys_ctx->listening_sockets = ptr;
 			continue;
 		}
 
