@@ -1,4 +1,4 @@
-# civetwebR 0.1.2
+# civetwebR 0.1.3
 
 - Request framing is checked where upstream CivetWeb leaves it open.
   A request with more than 64 headers is refused with 400; civetweb
